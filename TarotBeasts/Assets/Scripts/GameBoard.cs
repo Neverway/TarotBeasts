@@ -361,6 +361,33 @@ public class GameBoard : MonoBehaviour
                 position+Vector2Int.left, position+Vector2Int.right
             };
 
+        Vector2Int[] allDirections = {
+            Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right,
+            Vector2Int.up+Vector2Int.left, Vector2Int.up+Vector2Int.right,
+            Vector2Int.down+Vector2Int.right, Vector2Int.down+Vector2Int.left
+        };
+        var scoringDirections = new System.Collections.Generic.HashSet<Vector2Int>(adjacentTiles);
+        var arrows = boardTiles[tileIndex].scoringArrows;
+        Color tileColor = currentTile.player > 0 ? GetPlayerColor(currentTile.player - 1) : Color.white;
+        for (int d = 0; d < allDirections.Length && d < arrows.Length; d++)
+        {
+            Vector2Int dir = position + allDirections[d];
+            if (!scoringDirections.Contains(position + allDirections[d]) || !IsGridPositionInBounds(dir))
+            {
+                arrows[d].SetActive(false);
+                continue;
+            }
+            int otherIndex = GridPositionToTileIndex(dir);
+            bool otherUpgraded = IsPieceUpgraded(otherIndex);
+            int points = currentTile.GetPointsAgainst(boardData[otherIndex], upgraded, otherUpgraded);
+            arrows[d].SetActive(points > 0);
+            if (points > 0)
+            {
+                var img = arrows[d].GetComponent<Image>();
+                if (img != null) img.color = GetArrowColor(tileColor);
+            }
+        }
+
         int tileScore = 0;
         foreach (var adjacentTile in adjacentTiles)
         {
@@ -401,6 +428,12 @@ public class GameBoard : MonoBehaviour
     private string GetCurrentProfileName()
     {
         return GetProfileForTurnSlot(currentTurn).username;
+    }
+    
+    private Color GetArrowColor(Color playerColor)
+    {
+        Color.RGBToHSV(playerColor, out float h, out float s, out float v);
+        return Color.HSVToRGB(h, s * 0.5f, Mathf.Min(v * 1.4f, 1f));
     }
     
 

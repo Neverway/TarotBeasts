@@ -33,7 +33,7 @@ public class WB_ProfileSelect : MonoBehaviour
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
     public Transform playerListRoot;
     public GameObject playerEntryPrefab;
-    public Button continueButton;
+    public Button continueButton, moneyMatchButton;
 
 
 
@@ -52,8 +52,8 @@ public class WB_ProfileSelect : MonoBehaviour
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/
     private void RefreshContinueButton()
     {
-        continueButton.interactable =
-            GameInstance.Instance.SelectedPlayers.Count == GameInstance.Instance.playerCount;
+        continueButton.interactable = GameInstance.Instance.SelectedPlayers.Count == GameInstance.Instance.playerCount;
+        moneyMatchButton.interactable = GameInstance.Instance.SelectedPlayers.Count == GameInstance.Instance.playerCount;
     }
 
     
@@ -64,6 +64,8 @@ public class WB_ProfileSelect : MonoBehaviour
         foreach (Transform child in playerListRoot) Destroy(child.gameObject);
         spawnedEntries.Clear();
         GameInstance.Instance.SelectedPlayers.Clear();
+        moneyMatchButton.interactable = false;
+        continueButton.interactable = false;
 
         foreach (var profile in GameInstance.Instance.LoadedProfiles)
         {
