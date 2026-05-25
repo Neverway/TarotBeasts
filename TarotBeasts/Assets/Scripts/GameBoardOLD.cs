@@ -17,7 +17,7 @@ using UnityEngine.UI;
 /// <summary>
 /// The primary script for handling the game board
 /// </summary>
-public class GameBoard : MonoBehaviour
+public class GameBoardOLD : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
     /*-----[ Inspector Variables ]------------------------------------------------------------------------------------*/
@@ -40,7 +40,7 @@ public class GameBoard : MonoBehaviour
     [Tooltip("The scores of each of the player's")]
     private int[] scores;
     [Tooltip("The history of moves made on the board, used for undo-ing moves")]
-    private Stack<BoardTileData[]> boardHistory = new Stack<BoardTileData[]>();
+    private Stack<BoardTileDataOLD[]> boardHistory = new Stack<BoardTileDataOLD[]>();
     [Tooltip("The history of turns during moves made on the board, used for undo-ing moves")]
     private Stack<int> turnHistory = new Stack<int>();
     
@@ -68,7 +68,7 @@ public class GameBoard : MonoBehaviour
     [Tooltip("These are the colors that are assigned to things related to each player")]
     public Color[] playerColors;
 
-    private BoardTileData[] boardData;
+    private BoardTileDataOLD[] boardData;
     private BoardTile[] boardTiles;
     private Sprite[] pieceSprites;
     private GameInstance gameInstance;
@@ -120,7 +120,7 @@ public class GameBoard : MonoBehaviour
         }
         
         // Create and initialize the board tiles
-        boardData = new BoardTileData[boardWidth * boardHeight];
+        boardData = new BoardTileDataOLD[boardWidth * boardHeight];
         boardTiles = new BoardTile[boardWidth * boardHeight];
         for (int i = 0; i < boardTiles.Length; i++)
         {
@@ -188,7 +188,7 @@ public class GameBoard : MonoBehaviour
     /// </summary>
     private void SetTile(Sprite icon, int pieceIndex)
     {
-        boardHistory.Push((BoardTileData[])boardData.Clone());
+        boardHistory.Push((BoardTileDataOLD[])boardData.Clone());
         turnHistory.Push(currentTurn);
         
         // Set the boardData
@@ -352,7 +352,7 @@ public class GameBoard : MonoBehaviour
         boardTiles[tileIndex].upgradedFX.SetActive(upgraded);
 
         Vector2Int position = TileIndexToGridPosition(tileIndex);
-        Vector2Int[] adjacentTiles = (upgraded && currentTile.piece == GameBoard.fox)
+        Vector2Int[] adjacentTiles = (upgraded && currentTile.piece == GameBoardOLD.fox)
             ? new[] {
                 position+Vector2Int.up,    position+Vector2Int.down,
                 position+Vector2Int.left,  position+Vector2Int.right,
@@ -400,14 +400,14 @@ public class GameBoard : MonoBehaviour
             tileScore += currentTile.GetPointsAgainst(boardData[otherIndex], upgraded, otherUpgraded);
         }
 
-        if (upgraded && currentTile.piece == GameBoard.wolf)
+        if (upgraded && currentTile.piece == GameBoardOLD.wolf)
         {
             Vector2Int[] cardinals = { position+Vector2Int.up, position+Vector2Int.down, position+Vector2Int.left, position+Vector2Int.right };
             foreach (var adj in cardinals)
             {
                 if (!IsGridPositionInBounds(adj)) continue;
                 var neighbor = boardData[GridPositionToTileIndex(adj)];
-                if (neighbor.player == currentTile.player && neighbor.piece == GameBoard.wolf) tileScore++;
+                if (neighbor.player == currentTile.player && neighbor.piece == GameBoardOLD.wolf) tileScore++;
             }
         }
 
@@ -551,31 +551,31 @@ public class GameBoard : MonoBehaviour
 }
 
 [Serializable]
-public struct BoardTileData
+public struct BoardTileDataOLD
 {
     [Tooltip("The id of the player that owns this tile (0 = no owner)")]
     public int player;
     [Tooltip("The id of the piece on this tile")]
     public int piece;
 
-    public int GetPointsAgainst(BoardTileData otherTile, bool thisUpgraded = false, bool otherUpgraded = false)
+    public int GetPointsAgainst(BoardTileDataOLD otherTile, bool thisUpgraded = false, bool otherUpgraded = false)
     {
         if (otherTile.player == 0) return 0;
 
         // Sudo wolf
         if (otherTile.player == player)
         {
-            if (piece == GameBoard.wolf && otherTile.piece == GameBoard.wolf && otherUpgraded)
+            if (piece == GameBoardOLD.wolf && otherTile.piece == GameBoardOLD.wolf && otherUpgraded)
                 return 1;
             return 0;
         }
 
         // Fox nulled by SU rabbity
-        if (piece == GameBoard.fox && otherTile.piece == GameBoard.rabbit && otherUpgraded && !thisUpgraded)
+        if (piece == GameBoardOLD.fox && otherTile.piece == GameBoardOLD.rabbit && otherUpgraded && !thisUpgraded)
             return 0;
 
         // SU rabbity beats fox
-        if (thisUpgraded && piece == GameBoard.rabbit && otherTile.piece == GameBoard.fox && !otherUpgraded)
+        if (thisUpgraded && piece == GameBoardOLD.rabbit && otherTile.piece == GameBoardOLD.fox && !otherUpgraded)
             return 1;
 
         // Normal crap
@@ -583,11 +583,11 @@ public struct BoardTileData
         return 0;
     }
 
-    public bool Beats(BoardTileData otherTile)
+    public bool Beats(BoardTileDataOLD otherTile)
     {
-        if (piece == GameBoard.wolf && otherTile.piece == GameBoard.fox) return true;
-        if (piece == GameBoard.fox && otherTile.piece == GameBoard.rabbit) return true;
-        if (piece == GameBoard.rabbit && otherTile.piece == GameBoard.wolf) return true;
+        if (piece == GameBoardOLD.wolf && otherTile.piece == GameBoardOLD.fox) return true;
+        if (piece == GameBoardOLD.fox && otherTile.piece == GameBoardOLD.rabbit) return true;
+        if (piece == GameBoardOLD.rabbit && otherTile.piece == GameBoardOLD.wolf) return true;
         return false;
     }
 }

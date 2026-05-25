@@ -9,35 +9,22 @@
 
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-/// <summary>
-/// The interface widget for the versus setup screen
-/// </summary>
-public class WB_Versus : MonoBehaviour
+public class PAgent_CPU : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
     /*-----[ Inspector Variables ]------------------------------------------------------------------------------------*/
-    [SerializeField] private int defaultGridWidth = 6, defaultGridHeight = 6, defaultPlayerCount = 2;
 
 
     /*-----[ External Variables ]-------------------------------------------------------------------------------------*/
 
 
     /*-----[ Internal Variables ]-------------------------------------------------------------------------------------*/
-    
+
+
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
-    public TMP_InputField gridWidthField;
-    public TMP_InputField gridHeightField;
-    public TMP_InputField playerCountField;
-    public Toggle timeLimitEnabled;
-    public TMP_InputField timeLimitDurationField;
-    public Toggle specialTilesEnabled;
-    private GameInstance gameInstance;
-    
 
 
 
@@ -47,29 +34,20 @@ public class WB_Versus : MonoBehaviour
     #region=======================================( Functions )======================================================= //
 
     /*-----[ Mono Functions ]-----------------------------------------------------------------------------------------*/
+    private void Start()
+    {
     
+    }
+
+    private void Update()
+    {
+    
+    }
 
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/
 
 
     /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
-    public void Confirm()
-    {
-        gameInstance = FindFirstObjectByType<GameInstance>();
-        gameInstance.boardWidth = int.Parse(gridWidthField.text);
-        gameInstance.boardHeight = int.Parse(gridHeightField.text);
-        gameInstance.playerCount = int.Parse(playerCountField.text);
-        gameInstance.timeLimitEnabled = timeLimitEnabled.isOn;
-        gameInstance.timeLimitDuration = int.Parse(timeLimitDurationField.text);
-        gameInstance.specialTilesEnabled = specialTilesEnabled.isOn;
-    }
-
-    public void Cancel()
-    {
-        gridWidthField.text = defaultGridWidth.ToString();
-        gridHeightField.text = defaultGridHeight.ToString();
-        playerCountField.text = defaultPlayerCount.ToString();
-    }
 
 
     #endregion

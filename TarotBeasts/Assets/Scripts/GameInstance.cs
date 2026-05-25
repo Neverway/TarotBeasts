@@ -27,6 +27,10 @@ public class GameInstance : MonoBehaviour
     public int boardWidth = 6;
     public int boardHeight = 6;
     public int playerCount = 2;
+    public bool timeLimitEnabled = true;
+    public int timeLimitDuration = 180;
+    public bool specialTilesEnabled = true;
+    public int moneyMatchBounty = 0;
 
 
     /*-----[ Internal Variables ]-------------------------------------------------------------------------------------*/
