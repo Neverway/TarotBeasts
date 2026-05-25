@@ -12,6 +12,9 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+/// <summary>
+/// Used on the entries for each player's gold counter on the game board
+/// </summary>
 public class PlayerGoldEntry : MonoBehaviour
 {
     #region========================================( Variables )======================================================//

@@ -12,6 +12,9 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+/// <summary>
+/// The interface widget on the versus setup, for adding new player profiles
+/// </summary>
 public class WB_ProfileEdit : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
@@ -55,13 +58,13 @@ public class WB_ProfileEdit : MonoBehaviour
             return;
         }
 
-        if (GameInstance.Instance.ProfileExists(name))
+        if (GameInstance.Instance.PlayerProfileExists(name))
         {
             warningMessage.text = "A profile with that name already exists.";
             return;
         }
 
-        GameInstance.Instance.CreateProfile(name);
+        GameInstance.Instance.CreatePlayerProfile(name);
         warningMessage.text = "";
     }
 

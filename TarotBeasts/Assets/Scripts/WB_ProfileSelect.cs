@@ -14,9 +14,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+
 /// <summary>
-/// On the player select screen, create a list of all the player profiles, and require the player to select as many profiles as the player count to continue
-/// Clicking on a player entry will either add or remove them from the selected players list
+/// The interface widget on the versus setup, for selecting which players are participating in the match
 /// </summary>
 public class WB_ProfileSelect : MonoBehaviour
 {
@@ -83,12 +83,12 @@ public class WB_ProfileSelect : MonoBehaviour
         var gi = GameInstance.Instance;
         if (gi.SelectedPlayers.Contains(entry.Profile))
         {
-            gi.DeselectPlayer(entry.Profile);
+            gi.DeselectPlayerProfile(entry.Profile);
             entry.SetSelected(false);
         }
         else
         {
-            gi.SelectPlayer(entry.Profile);
+            gi.SelectPlayerProfile(entry.Profile);
             entry.SetSelected(gi.SelectedPlayers.Contains(entry.Profile));
         }
         RefreshContinueButton();

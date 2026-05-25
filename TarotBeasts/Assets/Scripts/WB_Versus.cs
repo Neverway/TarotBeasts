@@ -12,6 +12,9 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+/// <summary>
+/// The interface widget for the versus setup screen
+/// </summary>
 public class WB_Versus : MonoBehaviour
 {
     #region========================================( Variables )======================================================//

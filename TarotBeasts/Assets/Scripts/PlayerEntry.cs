@@ -8,12 +8,13 @@
 //====================================================================================================================//
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Used on the entries for each player profile on WB_ProfileSelect
+/// </summary>
 public class PlayerEntry : MonoBehaviour
 {
     #region========================================( Variables )======================================================//

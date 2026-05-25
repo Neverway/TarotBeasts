@@ -12,6 +12,9 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+/// <summary>
+/// The interface widget on the versus setup, for choosing how much money the players want to sacrifice if they lose
+/// </summary>
 public class WB_MoneyMatch : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
@@ -25,8 +28,12 @@ public class WB_MoneyMatch : MonoBehaviour
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
+    [Tooltip("The input field where the players type how much money to sacrifice")]
     public TMP_InputField goldEntryField;
-    public TMP_Text goldMaxText, errorText;
+    [Tooltip("The text component that displays the maximum amount of gold that can be sacrificed (This is determined by the gold amount of the poorest player)")]
+    public TMP_Text goldMaxText;
+    [Tooltip("The text component that is displayed when the sacrifice amount is higher than the max (It's just some text that say 'Amount is too high!')")]
+    public TMP_Text errorText;
     private GameInstance gameInstance;
 
 

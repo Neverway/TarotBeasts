@@ -14,6 +14,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// The primary script for handling the game board
+/// </summary>
 public class GameBoard : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
@@ -48,9 +51,6 @@ public class GameBoard : MonoBehaviour
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
-    private BoardTileData[] boardData;
-    private BoardTile[] boardTiles;
-    private Sprite[] pieceSprites;
     [Header("References")]
     public GameObject GameOverEffects;
     public TMP_Text gameOverText;
@@ -65,9 +65,12 @@ public class GameBoard : MonoBehaviour
     public Button[] pieces;
     public TMP_Text titleText, scoreText;
     public Sprite wolfSprite, foxSprite, rabbitSprite;
-    [Tooltip("These are the colors that are assigned to things related to this player")]
+    [Tooltip("These are the colors that are assigned to things related to each player")]
     public Color[] playerColors;
 
+    private BoardTileData[] boardData;
+    private BoardTile[] boardTiles;
+    private Sprite[] pieceSprites;
     private GameInstance gameInstance;
 
 
@@ -281,7 +284,7 @@ public class GameBoard : MonoBehaviour
                 var profile = GetProfileForTurnSlot(i);
                 int goldEarned = (i == winnerIndex && !tie) ? scores[i] * 2 : scores[i];
                 profile.gold += goldEarned;
-                gameInstance.UpdateProfile(profile);
+                gameInstance.UpdatePlayerProfile(profile);
 
                 goldEntries[i].SetGold(profile.gold, profile.username, GetPlayerColor(i));
                 
@@ -535,7 +538,9 @@ public class GameBoard : MonoBehaviour
         SceneManager.LoadScene(0);
     }
 
-    
+    /// <summary>
+    /// Exits the current game and returns to the title screen
+    /// </summary>
     public void ReturnToTitleScreen()
     {
         SceneManager.LoadScene(0);

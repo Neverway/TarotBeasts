@@ -11,6 +11,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// The interface widget on the versus setup, for deleting saved player profiles
+/// </summary>
 public class WB_ProfileDelete : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
@@ -56,7 +59,7 @@ public class WB_ProfileDelete : MonoBehaviour
     public void DeleteProfile()
     {
         var gameInstance = FindFirstObjectByType<GameInstance>();
-        gameInstance.DeleteProfile(username);
+        gameInstance.DeletePlayerProfile(username);
         FindFirstObjectByType<WB_ProfileSelect>().PopulateProfileList();
         Destroy(gameObject);
     }
