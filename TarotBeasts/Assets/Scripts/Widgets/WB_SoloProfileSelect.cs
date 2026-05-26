@@ -7,35 +7,30 @@
 //
 //====================================================================================================================//
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-
-/// <summary>
-/// The interface widget on the versus setup, for selecting which players are participating in the match
-/// </summary>
-public class WB_ProfileSelect : MonoBehaviour
+public class WB_SoloProfileSelect : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
     /*-----[ Inspector Variables ]------------------------------------------------------------------------------------*/
+    public Transform playerListRoot;
+    public GameObject playerEntryPrefab;
+    public Button startButton;
 
 
     /*-----[ External Variables ]-------------------------------------------------------------------------------------*/
 
 
     /*-----[ Internal Variables ]-------------------------------------------------------------------------------------*/
-    private List<PlayerEntry> spawnedEntries = new List<PlayerEntry>();
+    private List<PlayerEntry> _spawnedEntries = new List<PlayerEntry>();
+    private PlayerEntry _selectedEntry;
+
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
-    public Transform playerListRoot;
-    public GameObject playerEntryPrefab;
-    public Button continueButton, moneyMatchButton;
-    public TMP_Text bountyAmount;
 
 
 
@@ -45,74 +40,56 @@ public class WB_ProfileSelect : MonoBehaviour
     #region=======================================( Functions )======================================================= //
 
     /*-----[ Mono Functions ]-----------------------------------------------------------------------------------------*/
-    public void OnEnable()
+    private void OnEnable()
     {
         PopulateProfileList();
-        bountyAmount.text = $"<sprite=0>{GameInstance.Instance.moneyMatchBounty.ToString()}";
     }
-
 
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/
-    private void RefreshContinueButton()
+    private void PopulateProfileList()
     {
-        continueButton.interactable = GameInstance.Instance.SelectedPlayers.Count == GameInstance.Instance.playerCount;
-        moneyMatchButton.interactable = GameInstance.Instance.SelectedPlayers.Count == GameInstance.Instance.playerCount;
-    }
-
-    
-    /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
-    public void PopulateProfileList()
-    {
-        // Clear old entries
         foreach (Transform child in playerListRoot) Destroy(child.gameObject);
-        spawnedEntries.Clear();
-        GameInstance.Instance.SelectedPlayers.Clear();
-        moneyMatchButton.interactable = false;
-        continueButton.interactable = false;
+        _spawnedEntries.Clear();
+        _selectedEntry = null;
+        startButton.interactable = false;
 
         foreach (var profile in GameInstance.Instance.LoadedProfiles)
         {
             var go = Instantiate(playerEntryPrefab, playerListRoot);
             var entry = go.GetComponent<PlayerEntry>();
             entry.Init(profile, OnEntryClicked);
-            spawnedEntries.Add(entry);
+            _spawnedEntries.Add(entry);
         }
-
-        RefreshContinueButton();
     }
 
     private void OnEntryClicked(PlayerEntry entry)
     {
-        var gi = GameInstance.Instance;
-        if (gi.SelectedPlayers.Contains(entry.Profile))
+        if (_selectedEntry != null) _selectedEntry.SetSelected(false);
+
+        if (_selectedEntry == entry)
         {
-            gi.DeselectPlayerProfile(entry.Profile);
-            entry.SetSelected(false);
+            _selectedEntry = null;
+            startButton.interactable = false;
+            return;
         }
-        else
-        {
-            gi.SelectPlayerProfile(entry.Profile);
-            entry.SetSelected(gi.SelectedPlayers.Contains(entry.Profile));
-        }
-        RefreshContinueButton();
+
+        _selectedEntry = entry;
+        _selectedEntry.SetSelected(true);
+        startButton.interactable = true;
     }
 
-    public void Continue()
+    /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
+    public void StartSolo()
     {
+        if (_selectedEntry == null) return;
+        GameInstance.Instance.StartSoloMatch(_selectedEntry.Profile);
         SceneManager.LoadScene(1);
-    }
-
-    public void UpdateMoneyMatch()
-    {
-        moneyMatchButton.gameObject.SetActive(true);
-        bountyAmount.text = $"<sprite=0>{GameInstance.Instance.moneyMatchBounty.ToString()}";
     }
 
     public void RefreshPlayerList()
     {
         PopulateProfileList();
     }
-
 
     #endregion
 }

@@ -84,9 +84,16 @@ public class GameBoard : MonoBehaviour
         var gameInstance = GameInstance.Instance;
 
         var agents = new List<IPlayerAgent>();
-        foreach (var profile in gameInstance.SelectedPlayers)
+        if (gameInstance.IsSoloMode)
         {
-            agents.Add(new LocalPlayerAgent(profile));
+            agents.Add(new LocalPlayerAgent(gameInstance.SelectedPlayers[0]));
+            var cpuProfile = new PlayerProfile("D.D.");
+            agents.Add(new CPUPlayerAgent(cpuProfile, this));
+        }
+        else
+        {
+            foreach (var profile in gameInstance.SelectedPlayers)
+                agents.Add(new LocalPlayerAgent(profile));
         }
 
         IRuleset ruleset = new StandardRuleset();

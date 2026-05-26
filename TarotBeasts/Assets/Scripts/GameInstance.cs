@@ -28,9 +28,11 @@ public class GameInstance : MonoBehaviour
     public int boardHeight = 6;
     public int playerCount = 2;
     public bool timeLimitEnabled = true;
-    public int timeLimitDuration = 180;
+    public int timeLimitDuration = 420;
     public bool specialTilesEnabled = true;
     public int moneyMatchBounty = 0;
+    
+    public bool IsSoloMode { get; private set; }
 
 
     /*-----[ Internal Variables ]-------------------------------------------------------------------------------------*/
@@ -138,6 +140,26 @@ public class GameInstance : MonoBehaviour
         SelectedPlayers.Remove(profile);
     }
 
+    public void StartSoloMatch(PlayerProfile humanProfile)
+    {
+        IsSoloMode = true;
+        boardWidth = 6;
+        boardHeight = 6;
+        playerCount = 2;
+        timeLimitEnabled = true;
+        timeLimitDuration = 420;
+        specialTilesEnabled = true;
+        moneyMatchBounty = 0;
+
+        SelectedPlayers.Clear();
+        SelectedPlayers.Add(humanProfile);
+    }
+    
+    public void ClearSoloMode()
+    {
+        IsSoloMode = false;
+    }
+    
     #endregion
 }
 
