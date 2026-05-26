@@ -22,6 +22,13 @@ public class StandardRuleset : IRuleset
     
     public const int Empty = 0, Wolf = 1, Fox = 2, Rabbit = 3;
 
+    private readonly SpecialTileMap _specialTiles;
+
+    public StandardRuleset(SpecialTileMap specialTiles = null)
+    {
+        _specialTiles = specialTiles;
+    }
+
 
     /*-----[ External Variables ]-------------------------------------------------------------------------------------*/
 
@@ -52,6 +59,8 @@ public class StandardRuleset : IRuleset
     {
         var tile = state.Tiles[tileIndex];
         if (tile.player == 0) return false;
+
+        if (_specialTiles != null && _specialTiles.Types[tileIndex] == SpecialTileType.AutoUpgrade) return true;
  
         Vector2Int pos = state.IndexToGrid(tileIndex);
         Vector2Int[] neighbors = { pos + Vector2Int.up, pos + Vector2Int.down, pos + Vector2Int.left, pos + Vector2Int.right };
@@ -88,6 +97,18 @@ public class StandardRuleset : IRuleset
         if (tile.piece == Fox && other.piece == Rabbit) return true;
         if (tile.piece == Rabbit && other.piece == Wolf) return true;
         return false;
+    }
+
+    private int ApplyScoreMultiplier(int raw, int tileIndex)
+    {
+        if (_specialTiles == null) return raw;
+        return _specialTiles.Types[tileIndex] switch
+        {
+            SpecialTileType.DoubleScore => raw * 2,
+            SpecialTileType.TripleScore => raw * 3,
+            SpecialTileType.NullScore => raw * 0,
+            _ => raw,
+        };
     }
 
     
@@ -146,7 +167,7 @@ public class StandardRuleset : IRuleset
             }
         }
  
-        result.Score = totalScore;
+        result.Score = ApplyScoreMultiplier(totalScore, tileIndex);
         return result;
     }
     

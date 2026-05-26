@@ -30,11 +30,14 @@ public class MatchController : MonoBehaviour
     public event Action<int[]> OnScoresUpdated;
     public event Action<GameOverResult> OnGameOver;
     public event Action<BoardState, int, int[]> OnUndoPerformed;
+    public event Action<float[]> OnTimersUpdated;
+    public event Action<int> OnPlayerTimedOut; 
     
     public BoardState boardState { get; private set; }
     public IRuleset ruleset { get; private set; }
     public int currentTurnSlot { get; private set; }
     public bool isGameOver { get; private set; }
+    public SpecialTileMap SpecialTiles { get; private set; }
     
     public int PlayerCount => agents.Count;
 
@@ -44,6 +47,7 @@ public class MatchController : MonoBehaviour
     private int[] scores;
     private int[] turnToPlayerMap;
     private TileScoringResult[] lastScoringResults;
+    private PlayerTimers _timers;
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
@@ -56,6 +60,13 @@ public class MatchController : MonoBehaviour
     #region=======================================( Functions )======================================================= //
 
     /*-----[ Mono Functions ]-----------------------------------------------------------------------------------------*/
+    private void Update()
+    {
+        if (_timers == null || isGameOver) return;
+        bool ranOut = _timers.Tick(currentTurnSlot, Time.deltaTime);
+        OnTimersUpdated?.Invoke(_timers.RemainingTime);
+        if (ranOut) TryEndGameByTime();
+    }
     
 
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/
@@ -63,6 +74,16 @@ public class MatchController : MonoBehaviour
     /*__________[ Turn functions ]__________*/
     private void BeginCurrentTurn()
     {
+        if (_timers != null)
+        {
+            int attempts = 0;
+            while (_timers.Eliminated[currentTurnSlot] && attempts < PlayerCount)
+            {
+                currentTurnSlot = (currentTurnSlot + 1) % PlayerCount;
+                attempts++;
+            }
+        }
+        
         var agent = GetCurrentAgent();
         agent.OnMoveChosen += HandleMoveChosen;
         agent.BeginTurn(boardState, ruleset, currentTurnSlot);
@@ -98,6 +119,13 @@ public class MatchController : MonoBehaviour
     {
         currentTurnSlot = (currentTurnSlot + 1) % PlayerCount;
         BeginCurrentTurn();
+    }
+    
+    private void HandlePlayerTimedOut(int slot)
+    {
+        OnPlayerTimedOut?.Invoke(slot);
+        GetCurrentAgent().OnMoveChosen -= HandleMoveChosen;
+        GetCurrentAgent().CancelTurn();
     }
     
     /*__________[ Undo functions ]__________*/
@@ -141,15 +169,64 @@ public class MatchController : MonoBehaviour
     protected virtual void ApplyEndOfMatchGold(GameOverResult result)
     {
         var gameInstance = GameInstance.Instance;
+        int bounty = gameInstance.moneyMatchBounty;
+
+        if (bounty > 0)
+        {
+            for (int slot = 0; slot < PlayerCount; slot++)
+            {
+                var profile = GetAgent(slot).Profile;
+                profile.gold = Mathf.Max(0, profile.gold - bounty);
+                gameInstance.UpdatePlayerProfile(profile);
+            }
+        }
+        
         for (int slot = 0; slot < PlayerCount; slot++)
         {
             var profile = GetAgent(slot).Profile;
-            int earned = (slot == result.WinnerSlot && !result.IsTie)
-                ? result.FinalScores[slot] * 2
-                : result.FinalScores[slot];
+            bool isWinner = slot == result.WinnerSlot && !result.IsTie;
+            int earned = isWinner ? result.FinalScores[slot] * 2 : result.FinalScores[slot];
+            if (isWinner) earned += bounty * PlayerCount;
             profile.gold += earned;
             gameInstance.UpdatePlayerProfile(profile);
         }
+
+        result.MoneyMatchBounty = bounty;
+        gameInstance.moneyMatchBounty = 0;
+    }
+
+    private GameOverResult CheckGameOverByTime()
+    {
+        int winnerSlot = -1;
+        int topScore = -1;
+        bool tie = false;
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            if (_timers.Eliminated[i]) continue;
+            if (scores[i] > topScore) 
+            { 
+                topScore = scores[i];
+                winnerSlot = i;
+                tie = false;
+            }
+            else if (scores[i] == topScore)
+            {
+                tie = true;
+            }
+        }
+
+        return new GameOverResult(tie ? -1 : winnerSlot, (int[])scores.Clone());
+    }
+    
+    private void TryEndGameByTime()
+    {
+        if (_timers.ActivePlayerCount() <= 1)
+        {
+            var result = CheckGameOverByTime();
+            if (result != null) { isGameOver = true; ApplyEndOfMatchGold(result); OnGameOver?.Invoke(result); }
+            return;
+        }
+        NextTurn();
     }
 
 
@@ -162,6 +239,19 @@ public class MatchController : MonoBehaviour
         boardState = new BoardState(_boardWidth, _boardHeight);
         scores = new int[_agents.Count];
         lastScoringResults = new TileScoringResult[boardState.tileCount];
+        
+        var gameInstace = GameInstance.Instance;
+
+        // Special Tiles
+        SpecialTiles = gameInstace.specialTilesEnabled ? SpecialTileMap.Generate(boardState.tileCount) : null;
+        if (ruleset is StandardRuleset && SpecialTiles != null)
+        {
+            ruleset = new StandardRuleset(SpecialTiles);
+        }
+        
+        // Timers
+        _timers = gameInstace.timeLimitEnabled ? new PlayerTimers(agents.Count, gameInstace.timeLimitDuration) : null;
+        if (_timers != null) _timers.OnPlayerEliminated += HandlePlayerTimedOut;
         
         // Randomize the turn order when the match begins
         turnToPlayerMap = new int[_agents.Count];
@@ -205,6 +295,8 @@ public class MatchController : MonoBehaviour
     {
         return (int[])scores.Clone();
     }
+
+    public bool IsPlayerEliminated(int slot) => _timers != null && _timers.Eliminated[slot];
 
 
     #endregion

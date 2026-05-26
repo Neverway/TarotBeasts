@@ -7,6 +7,7 @@
 //
 //====================================================================================================================//
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -20,7 +21,12 @@ public class WB_Versus : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
     /*-----[ Inspector Variables ]------------------------------------------------------------------------------------*/
-    [SerializeField] private int defaultGridWidth = 6, defaultGridHeight = 6, defaultPlayerCount = 2;
+    [SerializeField] private int defaultGridWidth = 6;
+    [SerializeField] private int defaultGridHeight = 6;
+    [SerializeField] private int defaultPlayerCount = 2;
+    [SerializeField] private bool defaultTimeLimitEnabled = true;
+    [SerializeField] private int defaultTimeLimitDuration = 180;
+    [SerializeField] private bool defaultSpecialTilesEnabled = true;
 
 
     /*-----[ External Variables ]-------------------------------------------------------------------------------------*/
@@ -37,9 +43,6 @@ public class WB_Versus : MonoBehaviour
     public TMP_InputField timeLimitDurationField;
     public Toggle specialTilesEnabled;
     private GameInstance gameInstance;
-    
-
-
 
     #endregion
 
@@ -47,15 +50,28 @@ public class WB_Versus : MonoBehaviour
     #region=======================================( Functions )======================================================= //
 
     /*-----[ Mono Functions ]-----------------------------------------------------------------------------------------*/
-    
+    private void OnEnable()
+    {
+        RefreshTimeLimitInteractable();
+    }
+
 
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/
-
+    private void RefreshTimeLimitInteractable()
+    {
+        timeLimitDurationField.interactable = timeLimitEnabled.isOn;
+    }
+    
 
     /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
+    public void OnTimeLimitToggleChanged()
+    {
+        RefreshTimeLimitInteractable();
+    }
+    
     public void Confirm()
     {
-        gameInstance = FindFirstObjectByType<GameInstance>();
+        gameInstance = GameInstance.Instance;
         gameInstance.boardWidth = int.Parse(gridWidthField.text);
         gameInstance.boardHeight = int.Parse(gridHeightField.text);
         gameInstance.playerCount = int.Parse(playerCountField.text);
@@ -69,6 +85,11 @@ public class WB_Versus : MonoBehaviour
         gridWidthField.text = defaultGridWidth.ToString();
         gridHeightField.text = defaultGridHeight.ToString();
         playerCountField.text = defaultPlayerCount.ToString();
+        timeLimitEnabled.isOn = defaultTimeLimitEnabled;
+        timeLimitDurationField.text = defaultTimeLimitDuration.ToString();
+        specialTilesEnabled.isOn = defaultSpecialTilesEnabled;
+        
+        RefreshTimeLimitInteractable();
     }
 
 

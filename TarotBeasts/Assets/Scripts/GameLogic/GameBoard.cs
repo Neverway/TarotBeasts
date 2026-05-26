@@ -12,6 +12,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using TMPro;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -58,6 +59,7 @@ public class GameBoard : MonoBehaviour
     [Header("HUD")]
     public TMP_Text titleText;
     public TMP_Text scoreText;
+    public TMP_Text timerText;
  
     [Header("Game Over")]
     public GameObject GameOverEffects;
@@ -67,6 +69,7 @@ public class GameBoard : MonoBehaviour
  
     [Header("Player Colors")]
     public Color[] playerColors;
+    public Color eliminatedColor = Color.gray;
 
 
 
@@ -102,6 +105,8 @@ public class GameBoard : MonoBehaviour
         _match.OnScoresUpdated += HandleScoresUpdated;
         _match.OnGameOver += HandleGameOver;
         _match.OnUndoPerformed += HandleUndoPerformed;
+        _match.OnTimersUpdated += HandleTimersUpdated;
+        _match.OnPlayerTimedOut += HandlePlayerTimedOut;
         
         _match.InitMatch(ruleset, agents, gameInstance.boardWidth, gameInstance.boardHeight);
     }
@@ -115,6 +120,8 @@ public class GameBoard : MonoBehaviour
         _match.OnScoresUpdated -= HandleScoresUpdated;
         _match.OnGameOver -= HandleGameOver;
         _match.OnUndoPerformed -= HandleUndoPerformed;
+        _match.OnTimersUpdated -= HandleTimersUpdated;
+        _match.OnPlayerTimedOut -= HandlePlayerTimedOut;
     }
 
 
@@ -166,6 +173,8 @@ public class GameBoard : MonoBehaviour
             _goldEntries[i] = newPlayerEntry.GetComponent<PlayerGoldEntry>();
             _goldEntries[i].Init(profile.username, profile.gold, GetPlayerColor(i));
         }
+
+        goldBountyCounter.text = $"<sprite=0>{GameInstance.Instance.moneyMatchBounty.ToString()}";
     }
 
     private void SubscribePieceButtons()
@@ -174,6 +183,19 @@ public class GameBoard : MonoBehaviour
         {
             int index = i;
             pieces[i].onClick.AddListener(() => SelectPiece(index));
+        }
+    }
+
+    private void ApplySpecialTileVisuals()
+    {
+        var map = _match.SpecialTiles;
+        if (map == null) return;
+
+        for (int i = 0; i < _boardTiles.Length; i++)
+        {
+            var type = map.Types[i];
+            if (type == SpecialTileType.None) continue;
+            SetSpecialTileVisual(_boardTiles[i], type);
         }
     }
     
@@ -222,6 +244,7 @@ public class GameBoard : MonoBehaviour
     {
         RefreshAllTileVisuals(state);
         RefreshScoreText(scores);
+        ApplySpecialTileVisuals();
     }
  
     private void HandleBoardChanged(BoardState state, int[] scores, TileScoringResult[] scoringResults)
@@ -267,10 +290,20 @@ public class GameBoard : MonoBehaviour
         var statsBuilder = new StringBuilder();
         for (int i = 0; i < _match.PlayerCount; i++)
         {
-            var    agent    = _match.GetAgent(i);
-            int    earned   = (i == result.WinnerSlot && !result.IsTie)
-                              ? result.FinalScores[i] * 2 : result.FinalScores[i];
-            string hex      = ColorUtility.ToHtmlStringRGB(GetPlayerColor(i));
+            var agent = _match.GetAgent(i);
+            int bounty = result.MoneyMatchBounty;
+            int earned;
+            if (i == result.WinnerSlot && !result.IsTie)
+            {
+                earned = (result.FinalScores[i] * 2) + (bounty * _match.PlayerCount);
+            }
+            else
+            {
+                earned = result.FinalScores[i] - bounty;
+            }
+            
+            // Update the final player scores info
+            string hex = ColorUtility.ToHtmlStringRGB(GetPlayerColor(i));
             statsBuilder.Append($"<color=#{hex}>{agent.Profile.username}<br>S:{result.FinalScores[i]}<br><sprite=0>+{earned}</color>");
             if (i < _match.PlayerCount - 1) statsBuilder.Append("<br><br>");
  
@@ -287,6 +320,23 @@ public class GameBoard : MonoBehaviour
     {
         RefreshAllTileVisuals(state);
         RefreshScoreText(scores);
+    }
+
+    private void HandleTimersUpdated(float[] remaining)
+    {
+        if (timerText == null) return;
+        int slot = _match.currentTurnSlot;
+        bool eliminated = _match.IsPlayerEliminated(slot);
+        timerText.color = eliminated ? eliminatedColor : GetPlayerColor(slot);
+        timerText.text = eliminated ? "OUT" : FormatTime(remaining[slot]);
+    }
+
+    private void HandlePlayerTimedOut(int slot)
+    {
+        if (_goldEntries != null && slot < _goldEntries.Length)
+        {
+            _goldEntries[slot].SetGold(_match.GetAgent(slot).Profile.gold, _match.GetAgent(slot).Profile.username, eliminatedColor);
+        }
     }
     
     
@@ -308,6 +358,8 @@ public class GameBoard : MonoBehaviour
                 tile.button.interactable = true;
                 tile.upgradedFX.SetActive(false);
                 SetArrowsActive(tile, null);
+                if (_match.SpecialTiles != null) SetSpecialTileVisual(tile, _match.SpecialTiles.Types[i]);
+                else if (tile.special != null) tile.special.text = "";
             }
             else
             {
@@ -390,6 +442,26 @@ public class GameBoard : MonoBehaviour
     {
         Color.RGBToHSV(playerColor, out float h, out float s, out float v);
         return Color.HSVToRGB(h, s * 0.5f, Mathf.Min(v * 1.4f, 1f));
+    }
+
+    private void SetSpecialTileVisual(BoardTile tile, SpecialTileType type)
+    {
+        if (tile.special == null) return;
+        tile.special.text = type switch
+        {
+            SpecialTileType.DoubleScore => "2x",
+            SpecialTileType.TripleScore => "3x",
+            SpecialTileType.NullScore => "0x",
+            SpecialTileType.AutoUpgrade => "UP^",
+            _ => "",
+        };
+    }
+
+    private static string FormatTime(float seconds)
+    {
+        int min = Mathf.FloorToInt(seconds / 60f);
+        int sec = Mathf.FloorToInt(seconds % 60f);
+        return $"{min}:{sec:D2}";
     }
 
 

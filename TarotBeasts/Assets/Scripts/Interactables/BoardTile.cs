@@ -15,6 +15,8 @@ public class BoardTile : MonoBehaviour
     public Image icon;
     [Tooltip("The text component that represents the current score of this tile")]
     public TMP_Text score;
+    [Tooltip("The text component that represents the current special of this tile")]
+    public TMP_Text special;
     [Tooltip("The game object that holds the particle effects for when a piece is upgraded (this is enabled and disabled when a piece is upgraded and unupgraded)")]
     public GameObject upgradedFX;
     [Tooltip("The game objects that represent the direction the piece on this tile is scoring against")]
