@@ -39,6 +39,7 @@ public class GameBoard : MonoBehaviour
     private bool _waitingForPieceInput = false;
  
     private int[] _piecePlacedCounts = new int[3];
+    private GameOverResult _lastGameOverResult;
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
@@ -60,12 +61,18 @@ public class GameBoard : MonoBehaviour
     public TMP_Text titleText;
     public TMP_Text scoreText;
     public TMP_Text timerText;
+    public TMP_Text roundText;
+    public TMP_Text livesText;
  
     [Header("Game Over")]
     public GameObject GameOverEffects;
     public TMP_Text gameOverText;
     public TMP_Text gameOverPlayerStats;
     public TMP_Text gameOverTileStats;
+    public Button continueButton;
+
+    [Header("CPU Visuals")] 
+    public ArmController cpuArmController;
  
     [Header("Player Colors")]
     public Color[] playerColors;
@@ -88,7 +95,7 @@ public class GameBoard : MonoBehaviour
         {
             agents.Add(new LocalPlayerAgent(gameInstance.SelectedPlayers[0]));
             var cpuProfile = new PlayerProfile("D.D.");
-            agents.Add(new CPUPlayerAgent(cpuProfile, this));
+            agents.Add(new PAgent_CPUSmart(cpuProfile, this, gameInstance.SoloRound));
         }
         else
         {
@@ -104,6 +111,19 @@ public class GameBoard : MonoBehaviour
         SetupBoardTiles(gameInstance.boardWidth, gameInstance.boardHeight);
         SetupGoldShelf(agents, gameInstance.boardWidth, gameInstance.boardHeight);
         SubscribePieceButtons();
+        
+        if (gameInstance.IsSoloMode)
+        {
+            if (roundText != null) roundText.text = $"Round {gameInstance.SoloRound}";
+            if (livesText != null) livesText.text  = $"<sprite=2> {gameInstance.SoloLives}";
+        }
+        else
+        {
+            if (roundText != null) roundText.text = "VS";
+            if (livesText != null) livesText.text = "";
+        }
+
+        if (continueButton != null) continueButton.gameObject.SetActive(false);
         
         _match = gameObject.AddComponent<MatchController>();
         _match.OnMatchStarted += HandleMatchStarted;
@@ -242,7 +262,18 @@ public class GameBoard : MonoBehaviour
  
     public void ResetBoard() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
  
-    public void ReturnToTitleScreen() => SceneManager.LoadScene(0);
+    public void ReturnToTitleScreen()
+    { 
+        GameInstance.Instance.ClearSoloMode();
+        SceneManager.LoadScene(0);
+    }
+
+    public void SoloContinue()
+    {
+        bool playerWon = DidLocalPlayerWin(_lastGameOverResult);
+        GameInstance.Instance.SoloContinue(playerWon);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
 
     
     
@@ -264,6 +295,13 @@ public class GameBoard : MonoBehaviour
     {
         titleText.color = GetPlayerColor(turnSlot);
         titleText.text  = $"{agent.Profile.username}'s Turn";
+        
+        bool isPlayer = agent is LocalPlayerAgent;
+        if (!isPlayer)
+        {
+            _waitingForPieceInput = false;
+            pieceContainer.SetActive(false);
+        }
     }
  
     private void HandleScoresUpdated(int[] scores)
@@ -273,6 +311,8 @@ public class GameBoard : MonoBehaviour
  
     private void HandleGameOver(GameOverResult result)
     {
+        _lastGameOverResult = result;
+        
         titleText.color = Color.yellow;
         titleText.text  = "GAME OVER";
         GameOverEffects.SetActive(true);
@@ -321,6 +361,9 @@ public class GameBoard : MonoBehaviour
  
         // Piece stats
         BuildPieceStatsText(_match.boardState);
+        
+        if (GameInstance.Instance.IsSoloMode)
+            HandleSoloGameOver(result);
     }
  
     private void HandleUndoPerformed(BoardState state, int restoredTurnSlot, int[] scores)
@@ -345,6 +388,44 @@ public class GameBoard : MonoBehaviour
             _goldEntries[slot].SetGold(_match.GetAgent(slot).Profile.gold, _match.GetAgent(slot).Profile.username, eliminatedColor);
         }
     }
+    
+    private void HandleSoloGameOver(GameOverResult result)
+    {
+        var gi = GameInstance.Instance;
+        bool playerWon = DidLocalPlayerWin(result);
+
+        // Take their LIVVVVVEEEEESSS
+        int livesAfter;
+        if (playerWon)
+        {
+            livesAfter = gi.SoloLives;
+        }
+        else
+        {
+            livesAfter = gi.SoloLives - 1;
+        }
+
+        // Save their highest round
+        var humanProfile = gi.SelectedPlayers[0];
+        if (gi.SoloRound > humanProfile.soloHighestRound)
+        {
+            humanProfile.soloHighestRound = gi.SoloRound;
+            gi.UpdatePlayerProfile(humanProfile);
+        }
+
+        // Update the lives counter
+        if (livesText != null)
+        {
+            livesText.text = $"<sprite=2> {Mathf.Max(0, livesAfter)}";
+        }
+
+        // Show or hide the continue button
+        if (continueButton != null)
+        {
+            continueButton.gameObject.SetActive(livesAfter > 0);
+        }
+    }
+    
     
     
     /*__________[ Visuals ]__________*/
@@ -470,11 +551,22 @@ public class GameBoard : MonoBehaviour
         int sec = Mathf.FloorToInt(seconds % 60f);
         return $"{min}:{sec:D2}";
     }
+    
+    public void NotifyCPUPlacedAt(int tileIndex)
+    {
+        cpuArmController.gameObject.SetActive(true);
+        if (cpuArmController != null && _boardTiles[tileIndex] != null)
+            cpuArmController.MoveCPUToTarget(_boardTiles[tileIndex].transform.position);
+    }
 
 
 
     /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
-
+    private bool DidLocalPlayerWin(GameOverResult result)
+    {
+        if (result.IsTie) return false;
+        return _match.GetAgent(result.WinnerSlot) is LocalPlayerAgent;
+    }
 
     #endregion
 }

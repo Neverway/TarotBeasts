@@ -21,6 +21,8 @@ public class ArmController : MonoBehaviour
     [SerializeField] private float clickDepth = -0.7f;
     [SerializeField] private float clickDownDuration = 0.1f;
     [SerializeField] private float clickUpDuration = 0.2f;
+    [SerializeField] private bool isCPUControlled = false;
+    [SerializeField] private float CPUMoveSpeed = 8f;
 
 
     /*-----[ External Variables ]-------------------------------------------------------------------------------------*/
@@ -28,6 +30,7 @@ public class ArmController : MonoBehaviour
 
     /*-----[ Internal Variables ]-------------------------------------------------------------------------------------*/
     private float startY;
+    private Vector3 cpuTargetPos;
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
@@ -44,15 +47,17 @@ public class ArmController : MonoBehaviour
     private void Start()
     {
         startY = transform.position.y;
-        Cursor.visible = false;
+        if (!isCPUControlled) Cursor.visible = false;
     }
 
     private void Update()
     {
-        /*Vector3 mousePos = Mouse.current.position.ReadValue();
-        mousePos.z = viewCamera.transform.position.y;
-        Vector3 worldPos = viewCamera.ScreenToWorldPoint(mousePos);
-        transform.position = new Vector3(worldPos.x, transform.position.y, worldPos.z);*/
+        if (isCPUControlled)
+        {
+            Vector3 target = new Vector3(cpuTargetPos.x, transform.position.y, cpuTargetPos.z);
+            transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * CPUMoveSpeed);
+            return;
+        }
         
         Ray ray = viewCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
         Plane groundPlane = new Plane(Vector3.up, new Vector3(0, transform.position.y, 0));
@@ -62,8 +67,7 @@ public class ArmController : MonoBehaviour
             Vector3 worldPos = ray.GetPoint(distance);
             transform.position = new Vector3(worldPos.x, transform.position.y, worldPos.z);
         }
-        
-        
+
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             PunchDown();
@@ -87,8 +91,38 @@ public class ArmController : MonoBehaviour
         transform.DOMoveY(startY, clickUpDuration);
     }
 
+    private IEnumerator TravelThenPunch()
+    {
+        while (true)
+        {
+            Vector3 flatCurrent = new Vector3(transform.position.x, 0, transform.position.z);
+            Vector3 flatTarget = new Vector3(cpuTargetPos.x, 0, cpuTargetPos.z);
+            if (Vector3.Distance(flatCurrent, flatTarget) < 0.05f) break;
+            yield return null;
+        }
+        PunchDown();
+        yield return new WaitForSeconds(0.125f);
+        PunchUp();
+        yield return new WaitForSeconds(clickUpDuration);
+        cpuTargetPos = Vector3.zero;
+        while (true)
+        {
+            Vector3 flatCurrent = new Vector3(transform.position.x, 0, transform.position.z);
+            Vector3 flatTarget = new Vector3(cpuTargetPos.x, 0, cpuTargetPos.z);
+            if (Vector3.Distance(flatCurrent, flatTarget) < 0.05f) break;
+            yield return null;
+        }
+        gameObject.SetActive(false);
+    }
+
 
     /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
+    public void MoveCPUToTarget(Vector3 worldPosition)
+    {
+        cpuTargetPos = worldPosition;
+        StopAllCoroutines();
+        StartCoroutine(TravelThenPunch());
+    }
 
 
     #endregion

@@ -9,29 +9,26 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
-public class WB_SoloProfileSelect : MonoBehaviour
+public class WB_Leaderboard : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
     /*-----[ Inspector Variables ]------------------------------------------------------------------------------------*/
-    public Transform playerListRoot;
-    public GameObject playerEntryPrefab;
-    public Button startButton;
 
 
     /*-----[ External Variables ]-------------------------------------------------------------------------------------*/
 
 
     /*-----[ Internal Variables ]-------------------------------------------------------------------------------------*/
-    private List<PlayerEntry> _spawnedEntries = new List<PlayerEntry>();
-    private PlayerEntry _selectedEntry;
+    private List<PlayerEntry> spawnedEntries = new List<PlayerEntry>();
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
-
+    public Transform playerListRoot;
+    public GameObject playerEntryPrefab;
+    public TMP_Text emptyLabel;
 
 
     #endregion
@@ -40,55 +37,37 @@ public class WB_SoloProfileSelect : MonoBehaviour
     #region=======================================( Functions )======================================================= //
 
     /*-----[ Mono Functions ]-----------------------------------------------------------------------------------------*/
-    private void OnEnable()
+    public void OnEnable()
     {
-        PopulateProfileList();
+        PopulateLeaderboard();
     }
 
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/
-    public void PopulateProfileList()
+    private void PopulateLeaderboard()
     {
         foreach (Transform child in playerListRoot) Destroy(child.gameObject);
-        _spawnedEntries.Clear();
-        _selectedEntry = null;
-        startButton.interactable = false;
+        spawnedEntries.Clear();
 
-        foreach (var profile in GameInstance.Instance.LoadedProfiles)
+        var profiles = new List<PlayerProfile>(GameInstance.Instance.LoadedProfiles);
+        profiles.Sort((a, b) => b.soloHighestRound.CompareTo(a.soloHighestRound));
+
+        bool anyEntries = profiles.Count > 0;
+        if (emptyLabel != null) emptyLabel.gameObject.SetActive(!anyEntries);
+
+        foreach (var profile in profiles)
         {
-            var go = Instantiate(playerEntryPrefab, playerListRoot);
-            var entry = go.GetComponent<PlayerEntry>();
-            entry.Init(profile, OnEntryClicked);
-            _spawnedEntries.Add(entry);
+            var newPlayerEntry = Instantiate(playerEntryPrefab, playerListRoot);
+            var entry = newPlayerEntry.GetComponent<PlayerEntry>();
+            entry.Init(profile, null);
+            entry.ShowHighestRound();
+            spawnedEntries.Add(entry);
         }
-    }
-
-    private void OnEntryClicked(PlayerEntry entry)
-    {
-        if (_selectedEntry != null) _selectedEntry.SetSelected(false);
-
-        if (_selectedEntry == entry)
-        {
-            _selectedEntry = null;
-            startButton.interactable = false;
-            return;
-        }
-
-        _selectedEntry = entry;
-        _selectedEntry.SetSelected(true);
-        startButton.interactable = true;
     }
 
     /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
-    public void StartSolo()
+    public void Refresh()
     {
-        if (_selectedEntry == null) return;
-        GameInstance.Instance.StartSoloMatch(_selectedEntry.Profile);
-        SceneManager.LoadScene(1);
-    }
-
-    public void RefreshPlayerList()
-    {
-        PopulateProfileList();
+        PopulateLeaderboard();
     }
 
     #endregion

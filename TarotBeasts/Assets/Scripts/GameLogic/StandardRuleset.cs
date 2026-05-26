@@ -204,7 +204,9 @@ public class StandardRuleset : IRuleset
     {
         var valid = new List<int>();
         for (int i = 0; i < state.tileCount; i++)
+        {
             if (state.IsTileEmpty(i)) valid.Add(i);
+        }
         return valid;
     }
  

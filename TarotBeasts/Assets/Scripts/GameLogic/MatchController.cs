@@ -185,8 +185,20 @@ public class MatchController : MonoBehaviour
         {
             var profile = GetAgent(slot).Profile;
             bool isWinner = slot == result.WinnerSlot && !result.IsTie;
-            int earned = isWinner ? result.FinalScores[slot] * 2 : result.FinalScores[slot];
-            if (isWinner) earned += bounty * PlayerCount;
+            int earned;
+            if (isWinner)
+            {
+                earned = result.FinalScores[slot] * 2;
+            }
+            else
+            {
+                earned = result.FinalScores[slot];
+            }
+
+            if (isWinner)
+            {
+                earned += bounty * PlayerCount;
+            }
             profile.gold += earned;
             gameInstance.UpdatePlayerProfile(profile);
         }

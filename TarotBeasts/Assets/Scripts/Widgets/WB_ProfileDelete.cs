@@ -60,7 +60,9 @@ public class WB_ProfileDelete : MonoBehaviour
     {
         var gameInstance = FindFirstObjectByType<GameInstance>();
         gameInstance.DeletePlayerProfile(username);
-        FindFirstObjectByType<WB_ProfileSelect>().PopulateProfileList();
+        FindFirstObjectByType<WB_ProfileSelect>(FindObjectsInactive.Include).RefreshPlayerList();
+        FindFirstObjectByType<WB_SoloProfileSelect>(FindObjectsInactive.Include).RefreshPlayerList();
+        FindFirstObjectByType<WB_Leaderboard>(FindObjectsInactive.Include).Refresh();
         Destroy(gameObject);
     }
 

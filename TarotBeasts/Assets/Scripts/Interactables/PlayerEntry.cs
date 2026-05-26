@@ -31,6 +31,7 @@ public class PlayerEntry : MonoBehaviour
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
     public TMP_Text playerName; // "<sprite=1> PLAYERNAME"
     public TMP_Text playerGold; // "<sprite=0>GOLD COUNT"
+    public TMP_Text playerHighestRound;
     public Button selectButton;
     public GameObject selectedIndicator;
     public GameObject confirmDeleteWidgetPrefab;
@@ -58,6 +59,7 @@ public class PlayerEntry : MonoBehaviour
         playerName.text = $"<sprite=1> {profile.username}";
         playerGold.text = $"<sprite=0>{profile.gold}";
         SetSelected(false);
+        if (playerHighestRound != null) playerHighestRound.gameObject.SetActive(false);
     }
 
     public void SetSelected(bool selected)
@@ -69,6 +71,15 @@ public class PlayerEntry : MonoBehaviour
     {
         var confirmWidget = Instantiate(confirmDeleteWidgetPrefab, GetComponentInParent<Canvas>().transform);
         confirmWidget.GetComponent<WB_ProfileDelete>().SetTargetUser(Profile.username);
+    }
+    
+    public void ShowHighestRound()
+    {
+        if (playerHighestRound != null)
+        {
+            playerHighestRound.gameObject.SetActive(true);
+            playerHighestRound.text = $"{Profile.soloHighestRound}";
+        }
     }
 
     #endregion
