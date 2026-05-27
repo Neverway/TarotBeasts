@@ -23,6 +23,8 @@ public class ArmController : MonoBehaviour
     [SerializeField] private float clickUpDuration = 0.2f;
     [SerializeField] private bool isCPUControlled = false;
     [SerializeField] private float CPUMoveSpeed = 8f;
+    [SerializeField] private Vector2 minXZ;
+    [SerializeField] private Vector2 maxXZ;
 
 
     /*-----[ External Variables ]-------------------------------------------------------------------------------------*/
@@ -65,7 +67,7 @@ public class ArmController : MonoBehaviour
         if (groundPlane.Raycast(ray, out float distance))
         {
             Vector3 worldPos = ray.GetPoint(distance);
-            transform.position = new Vector3(worldPos.x, transform.position.y, worldPos.z);
+            transform.position = new Vector3(Mathf.Clamp(worldPos.x, minXZ.x, maxXZ.x), transform.position.y, Mathf.Clamp(worldPos.z, minXZ.y, maxXZ.y));
         }
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
