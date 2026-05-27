@@ -72,11 +72,11 @@ public class WB_Versus : MonoBehaviour
     public void Confirm()
     {
         gameInstance = GameInstance.Instance;
-        gameInstance.boardWidth = int.Parse(gridWidthField.text);
-        gameInstance.boardHeight = int.Parse(gridHeightField.text);
-        gameInstance.playerCount = int.Parse(playerCountField.text);
+        if (int.TryParse(gridWidthField.text, out int result1)) gameInstance.boardWidth = int.Parse(gridWidthField.text);
+        if (int.TryParse(gridHeightField.text, out int result2)) gameInstance.boardHeight = int.Parse(gridHeightField.text);
+        if (int.TryParse(playerCountField.text, out int result3)) gameInstance.playerCount = int.Parse(playerCountField.text);
         gameInstance.timeLimitEnabled = timeLimitEnabled.isOn;
-        gameInstance.timeLimitDuration = int.Parse(timeLimitDurationField.text);
+        if (int.TryParse(timeLimitDurationField.text, out int result4)) gameInstance.timeLimitDuration = int.Parse(timeLimitDurationField.text);
         gameInstance.specialTilesEnabled = specialTilesEnabled.isOn;
     }
 

@@ -1023,6 +1023,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
+      - m_Target: {fileID: 1410639148}
+        m_TargetAssemblyTypeName: CursorController, Assembly-CSharp
+        m_MethodName: SetCursorVisible
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
 --- !u!114 &227478216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2483,6 +2495,18 @@ MonoBehaviour:
       - m_Target: {fileID: 1451913442}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
         m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1410639148}
+        m_TargetAssemblyTypeName: CursorController, Assembly-CSharp
+        m_MethodName: SetCursorVisible
         m_Mode: 6
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6864,6 +6888,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1410639145}
   - component: {fileID: 1410639147}
+  - component: {fileID: 1410639148}
   m_Layer: 0
   m_Name: BoardManager
   m_TagString: Untagged
@@ -6930,6 +6955,18 @@ MonoBehaviour:
   - {r: 0.7529412, g: 0.47842252, b: 0.08235294, a: 1}
   - {r: 0.08235294, g: 0.20119418, b: 0.7529412, a: 1}
   eliminatedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+--- !u!114 &1410639148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410639144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7735cb0221c9a2573aa8741e3ed6c6ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CursorController
 --- !u!1 &1416099854
 GameObject:
   m_ObjectHideFlags: 0
@@ -7273,7 +7310,6 @@ GameObject:
   - component: {fileID: 1451913446}
   - component: {fileID: 1451913445}
   - component: {fileID: 1451913444}
-  - component: {fileID: 1451913443}
   m_Layer: 5
   m_Name: RulesCanvas
   m_TagString: Untagged
@@ -7281,18 +7317,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
---- !u!114 &1451913443
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1451913442}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea7adb78810dad1339096f4e9a32552b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WB_ControlBoard
 --- !u!114 &1451913444
 MonoBehaviour:
   m_ObjectHideFlags: 0

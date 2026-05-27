@@ -316,6 +316,7 @@ public class GameBoard : MonoBehaviour
         titleText.color = Color.yellow;
         titleText.text  = "GAME OVER";
         GameOverEffects.SetActive(true);
+        GetComponent<CursorController>().SetCursorVisible(true);
  
         // Disable all tiles
         foreach (var t in _boardTiles) t.button.enabled = false;
@@ -396,7 +397,7 @@ public class GameBoard : MonoBehaviour
 
         // Take their LIVVVVVEEEEESSS
         int livesAfter;
-        if (playerWon)
+        if (playerWon || result.IsTie)
         {
             livesAfter = gi.SoloLives;
         }
