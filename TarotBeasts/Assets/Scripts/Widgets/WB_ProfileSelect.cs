@@ -10,6 +10,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -34,6 +35,7 @@ public class WB_ProfileSelect : MonoBehaviour
     public Transform playerListRoot;
     public GameObject playerEntryPrefab;
     public Button continueButton, moneyMatchButton;
+    public TMP_Text bountyAmount;
 
 
 
@@ -46,6 +48,7 @@ public class WB_ProfileSelect : MonoBehaviour
     public void OnEnable()
     {
         PopulateProfileList();
+        bountyAmount.text = $"<sprite=0>{GameInstance.Instance.moneyMatchBounty.ToString()}";
     }
 
 
@@ -97,6 +100,17 @@ public class WB_ProfileSelect : MonoBehaviour
     public void Continue()
     {
         SceneManager.LoadScene(1);
+    }
+
+    public void UpdateMoneyMatch()
+    {
+        moneyMatchButton.gameObject.SetActive(true);
+        bountyAmount.text = $"<sprite=0>{GameInstance.Instance.moneyMatchBounty.ToString()}";
+    }
+
+    public void RefreshPlayerList()
+    {
+        PopulateProfileList();
     }
 
 

@@ -74,10 +74,12 @@ public class GameOverResult
     public int WinnerSlot;
     public bool IsTie => WinnerSlot < 0;
     public int[] FinalScores;
+    public int MoneyMatchBounty;
 
     public GameOverResult(int winnerSlot, int[] finalScores)
     {
         WinnerSlot = winnerSlot;
         FinalScores = finalScores;
+        MoneyMatchBounty = 0;
     }
 }

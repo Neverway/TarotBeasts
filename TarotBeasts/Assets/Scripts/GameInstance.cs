@@ -28,9 +28,21 @@ public class GameInstance : MonoBehaviour
     public int boardHeight = 6;
     public int playerCount = 2;
     public bool timeLimitEnabled = true;
-    public int timeLimitDuration = 180;
+    public int timeLimitDuration = 420;
     public bool specialTilesEnabled = true;
     public int moneyMatchBounty = 0;
+    
+    [Header("Solo Settings")] 
+    [Tooltip("Flag to keep track of if the game is in solo mode (this crap gets referenced a lot)")]
+    public bool IsSoloMode { get; private set; }
+    [Tooltip("The current round in solo mode")]
+    public int SoloRound { get; private set; }
+    [Tooltip("The current amount of lives the player has in solo")]
+    public int SoloLives { get; private set; }
+    [Tooltip("The starting amount of lives the player is given in solo")]
+    public const int SoloStartingLives = 3;
+    [Tooltip("The round where special tiles are introduced in solo")]
+    public const int SoloSpecialTilesRound = 5;
 
 
     /*-----[ Internal Variables ]-------------------------------------------------------------------------------------*/
@@ -138,6 +150,38 @@ public class GameInstance : MonoBehaviour
         SelectedPlayers.Remove(profile);
     }
 
+    public void StartSoloMatch(PlayerProfile humanProfile)
+    {
+        IsSoloMode = true;
+        boardWidth = 6;
+        boardHeight = 6;
+        playerCount = 2;
+        timeLimitEnabled = true;
+        timeLimitDuration = 420;
+        specialTilesEnabled = false;
+        moneyMatchBounty = 0;
+        SoloRound = 1;
+        SoloLives = SoloStartingLives;
+
+        SelectedPlayers.Clear();
+        SelectedPlayers.Add(humanProfile);
+    }
+
+    public void SoloContinue(bool playerWon)
+    {
+        if (!playerWon) SoloLives--;
+        SoloRound++;
+        if (SoloRound >= SoloSpecialTilesRound) specialTilesEnabled = true;
+    }
+    
+    public void ClearSoloMode()
+    {
+        IsSoloMode = false;
+        SoloRound = 0;
+        SoloLives = 0;
+        specialTilesEnabled = false;
+    }
+    
     #endregion
 }
 
@@ -150,6 +194,8 @@ public class PlayerProfile
     public int gold;
     [Tooltip("The xp of the player profile (Not currently being used)")]
     public int xp;
+    [Tooltip("The highest round the player profile has managed to make it to in solo")]
+    public int soloHighestRound;
 
     [Tooltip("Constructor method for creating new instances of a player profile")]
     public PlayerProfile(string username)
@@ -157,5 +203,6 @@ public class PlayerProfile
         this.username = username;
         this.gold = 0;
         this.xp = 0;
+        this.soloHighestRound = 0;
     }
 }
