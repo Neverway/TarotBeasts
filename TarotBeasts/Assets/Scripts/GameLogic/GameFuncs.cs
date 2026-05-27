@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using static UnityEditor.Rendering.CameraUI;
 
 public static partial class GameFuncs
@@ -28,6 +29,7 @@ public static partial class GameFuncs
         }
     }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void ResetRegisteredProcessing()
     {
         inputProcessing = new();
