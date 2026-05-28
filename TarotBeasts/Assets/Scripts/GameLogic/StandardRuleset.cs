@@ -90,14 +90,8 @@ public class StandardRuleset : IRuleset
  
         return Beats(tile, other) ? 1 : 0;
     }
- 
-    private bool Beats(BoardTileData tile, BoardTileData other)
-    {
-        if (tile.piece == Wolf && other.piece == Fox) return true;
-        if (tile.piece == Fox && other.piece == Rabbit) return true;
-        if (tile.piece == Rabbit && other.piece == Wolf) return true;
-        return false;
-    }
+
+    private bool Beats(BoardTileData tile, BoardTileData other) => GameFuncs.Beats(tile, other);
 
     private int ApplyScoreMultiplier(int raw, int tileIndex)
     {
@@ -162,7 +156,8 @@ public class StandardRuleset : IRuleset
             {
                 if (!state.IsInBounds(adj)) continue;
                 var neighbor = state.Tiles[state.GridToIndex(adj)];
-                if (neighbor.player == currentTile.player && neighbor.piece == Wolf)
+                //if (neighbor.player == currentTile.player && neighbor.piece == Wolf) // Errynei suggested that I SMITE the rule here and make it team-agnostic
+                if (neighbor.piece == Wolf)
                     totalScore++;
             }
         }
@@ -213,6 +208,22 @@ public class StandardRuleset : IRuleset
     public IReadOnlyList<int> GetValidPieceTypes(BoardState state, int currentPlayerSlot) => new[] { Wolf, Fox, Rabbit };
 
 
-
     #endregion
+}
+
+public static partial class GameFuncs
+{
+    public const int Empty = 0, Wolf = 1, Fox = 2, Rabbit = 3;
+
+    public static bool Beats(BoardTileData tile, BoardTileData other)
+    {
+        ProcessInput(ref tile, ref other);
+        bool output = false;
+        
+        if (tile.piece == Wolf && other.piece == Fox) output = true;
+        else if (tile.piece == Fox && other.piece == Rabbit) output = true;
+        else if (tile.piece == Rabbit && other.piece == Wolf) output = true;
+
+        return ProcessOutput(tile, other, output);
+    }
 }

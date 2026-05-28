@@ -9,10 +9,10 @@
 
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
-public class LB_Title : MonoBehaviour
+public class TarotDeck : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
     /*-----[ Inspector Variables ]------------------------------------------------------------------------------------*/
@@ -26,7 +26,6 @@ public class LB_Title : MonoBehaviour
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
-    public TMP_Text versionText;
 
 
 
@@ -36,19 +35,22 @@ public class LB_Title : MonoBehaviour
     #region=======================================( Functions )======================================================= //
 
     /*-----[ Mono Functions ]-----------------------------------------------------------------------------------------*/
-    private void Start()
-    {
-        Cursor.visible = true;
-        versionText.text = Application.version;
-    }
+    
 
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/
 
 
     /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
-    public void QuitGame()
+    public static List<SelectableCard> DrawRandom(int count, GameBoard board)
     {
-        Application.Quit();
+        var drawn = new List<SelectableCard>();
+        for (int i = 0; i < count; i++)
+        {
+            var obj = Object.Instantiate(board.StrengthCardPrefab);
+            drawn.Add(obj.GetComponent<SelectableCard>());
+        }
+
+        return drawn;
     }
 
 

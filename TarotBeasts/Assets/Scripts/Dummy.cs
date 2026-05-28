@@ -7,12 +7,12 @@
 //
 //====================================================================================================================//
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
-public class LB_Title : MonoBehaviour
+public class Dummy : MonoBehaviour
 {
     #region========================================( Variables )======================================================//
     /*-----[ Inspector Variables ]------------------------------------------------------------------------------------*/
@@ -26,7 +26,6 @@ public class LB_Title : MonoBehaviour
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
-    public TMP_Text versionText;
 
 
 
@@ -36,20 +35,31 @@ public class LB_Title : MonoBehaviour
     #region=======================================( Functions )======================================================= //
 
     /*-----[ Mono Functions ]-----------------------------------------------------------------------------------------*/
-    private void Start()
+    private void Awake()
     {
-        Cursor.visible = true;
-        versionText.text = Application.version;
+        GameFuncs.ResetRegisteredProcessors();
+    }
+
+    private void OnEnable()
+    {
+        GameFuncs.ResetRegisteredProcessors();
+        GameFuncs.NewOutputProcessor<BoardTileData, BoardTileData, bool>(nameof(GameFuncs.Beats), InvertedBeats).Register();
+    }
+
+    private void OnDisable()
+    {
+        GameFuncs.ResetRegisteredProcessors();
     }
 
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/
-
+    private void InvertedBeats(BoardTileData tile, BoardTileData other, ref bool output)
+    {
+        // If the pieces are not the same, flip the outcome of the Beats function
+        if (tile.piece != other.piece)
+            output = !output;
+    }
 
     /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
-    public void QuitGame()
-    {
-        Application.Quit();
-    }
 
 
     #endregion

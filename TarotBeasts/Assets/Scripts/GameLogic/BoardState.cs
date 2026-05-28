@@ -109,6 +109,12 @@ public class BoardState
         Tiles[tileIndex].player = playerSlot;
     }
 
+    public void ClearTile(int tileIndex)
+    {
+        Tiles[tileIndex].piece = 0;
+        Tiles[tileIndex].player = 0;
+    }
+
 
     #endregion
 }

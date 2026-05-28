@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class GameFuncTestScript : MonoBehaviour
 {
@@ -19,37 +20,31 @@ public class GameFuncTestScript : MonoBehaviour
     [ContextMenu("Reset")]
     public void ResetRules()
     {
-        GameFuncs.ResetRegisteredProcessing();
+        GameFuncs.ResetRegisteredProcessors();
     }
 
     [ContextMenu("Add Reverse Rotate Rule")]
     public void AddReverseRotateRule() =>
-        GameFuncs.RegisterInputProcessing<Quaternion, Quaternion>(nameof(GameFuncs.RotateThing), ReverseRotationRule);
-    public Tuple<Quaternion, Quaternion> ReverseRotationRule(Quaternion oldQuaternion, Quaternion rotateBy)
+        GameFuncs.NewInputProcessor<Quaternion, Quaternion>(nameof(GameFuncs.RotateThing), ReverseRotationRule).Register();
+    public void ReverseRotationRule(ref Quaternion oldQuaternion, ref Quaternion rotateBy)
     {
         rotateBy = Quaternion.Inverse(rotateBy);
-
-        return new(oldQuaternion, rotateBy);
     }
-
-
 
     [ContextMenu("Add Double Rotate Rule")]
     public void AddDoubleRotateRule() =>
-        GameFuncs.RegisterInputProcessing<Quaternion, Quaternion>(nameof(GameFuncs.RotateThing), DoubleRotationRule);
-    public Tuple<Quaternion, Quaternion> DoubleRotationRule(Quaternion oldQuaternion, Quaternion rotateBy)
+        GameFuncs.NewInputProcessor<Quaternion, Quaternion>(nameof(GameFuncs.RotateThing), DoubleRotationRule).Register();
+    public void DoubleRotationRule(ref Quaternion oldQuaternion, ref Quaternion rotateBy)
     {
         rotateBy *= rotateBy;
-
-        return new(oldQuaternion, rotateBy);
     }
 
     [ContextMenu("Add Cancel Rotate Rule")]
     public void AddCancelRotateRule() =>
-        GameFuncs.RegisterOutputProcessing<Quaternion, Quaternion, Quaternion>(nameof(GameFuncs.RotateThing), CancelRotationRule);
-    public Quaternion CancelRotationRule(Quaternion oldQuaternion, Quaternion rotateBy, Quaternion output)
+        GameFuncs.NewOutputProcessor<Quaternion, Quaternion, Quaternion>(nameof(GameFuncs.RotateThing), CancelRotationRule).Register();
+    public void CancelRotationRule(Quaternion oldQuaternion, Quaternion rotateBy, ref Quaternion output)
     {
-        return oldQuaternion;
+        output = oldQuaternion;
     }
 }
 
@@ -62,6 +57,7 @@ public static partial class GameFuncs
     {
         ProcessInput(ref oldQuaternion, ref rotateBy);
 
+        
         Quaternion newRotation = oldQuaternion * rotateBy;
 
         return ProcessOutput(oldQuaternion, rotateBy, newRotation);

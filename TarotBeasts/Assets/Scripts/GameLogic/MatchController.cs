@@ -128,6 +128,26 @@ public class MatchController : MonoBehaviour
         GetCurrentAgent().CancelTurn();
     }
     
+    public void SubmitCardMove(int tileIndex)
+    {
+        var agent = GetCurrentAgent();
+        agent.OnMoveChosen -= HandleMoveChosen;
+    
+        RefreshScores();
+        OnBoardChanged?.Invoke(boardState, scores, lastScoringResults);
+    
+        var gameOverResult = ruleset.CheckGameOver(boardState, PlayerCount, scores);
+        if (gameOverResult != null)
+        {
+            isGameOver = true;
+            ApplyEndOfMatchGold(gameOverResult);
+            OnGameOver?.Invoke(gameOverResult);
+            return;
+        }
+    
+        NextTurn();
+    }
+    
     /*__________[ Undo functions ]__________*/
     public void RequestUndo()
     {

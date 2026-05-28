@@ -30,7 +30,7 @@ public class GameBoard : MonoBehaviour
 
 
     /*-----[ Internal Variables ]-------------------------------------------------------------------------------------*/
-    private MatchController _match;
+    public MatchController matchController;
     private BoardTile[] _boardTiles;
     private PlayerGoldEntry[] _goldEntries;
     private Sprite[] _pieceSprites;
@@ -40,6 +40,14 @@ public class GameBoard : MonoBehaviour
  
     private int[] _piecePlacedCounts = new int[3];
     private GameOverResult _lastGameOverResult;
+    
+    // Tarot Card Nonsense
+    private bool awaitingStabTarget = false;
+    private TarotCard_Strength pendingStrengthCard;
+    private Dictionary<int, GameObject> stabbedTiles = new Dictionary<int, GameObject>();
+    private Dictionary<int, int> stabbedTurnCooldown = new Dictionary<int, int>();
+
+    public CardHand cardHand;
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
@@ -73,10 +81,14 @@ public class GameBoard : MonoBehaviour
 
     [Header("CPU Visuals")] 
     public ArmController cpuArmController;
+    public ArmController playerArmController;
  
     [Header("Player Colors")]
     public Color[] playerColors;
     public Color eliminatedColor = Color.gray;
+    
+    [Header("Tarot Cards")]
+    public GameObject StrengthCardPrefab;
 
 
 
@@ -125,30 +137,32 @@ public class GameBoard : MonoBehaviour
 
         if (continueButton != null) continueButton.gameObject.SetActive(false);
         
-        _match = gameObject.AddComponent<MatchController>();
-        _match.OnMatchStarted += HandleMatchStarted;
-        _match.OnBoardChanged += HandleBoardChanged;
-        _match.OnTurnChanged += HandleTurnChanged;
-        _match.OnScoresUpdated += HandleScoresUpdated;
-        _match.OnGameOver += HandleGameOver;
-        _match.OnUndoPerformed += HandleUndoPerformed;
-        _match.OnTimersUpdated += HandleTimersUpdated;
-        _match.OnPlayerTimedOut += HandlePlayerTimedOut;
+        if (cardHand != null) cardHand.Init(this, matchController);
         
-        _match.InitMatch(ruleset, agents, gameInstance.boardWidth, gameInstance.boardHeight);
+        matchController = gameObject.AddComponent<MatchController>();
+        matchController.OnMatchStarted += HandleMatchStarted;
+        matchController.OnBoardChanged += HandleBoardChanged;
+        matchController.OnTurnChanged += HandleTurnChanged;
+        matchController.OnScoresUpdated += HandleScoresUpdated;
+        matchController.OnGameOver += HandleGameOver;
+        matchController.OnUndoPerformed += HandleUndoPerformed;
+        matchController.OnTimersUpdated += HandleTimersUpdated;
+        matchController.OnPlayerTimedOut += HandlePlayerTimedOut;
+        
+        matchController.InitMatch(ruleset, agents, gameInstance.boardWidth, gameInstance.boardHeight);
     }
     
     private void OnDestroy()
     {
-        if (_match == null) return;
-        _match.OnMatchStarted -= HandleMatchStarted;
-        _match.OnBoardChanged -= HandleBoardChanged;
-        _match.OnTurnChanged -= HandleTurnChanged;
-        _match.OnScoresUpdated -= HandleScoresUpdated;
-        _match.OnGameOver -= HandleGameOver;
-        _match.OnUndoPerformed -= HandleUndoPerformed;
-        _match.OnTimersUpdated -= HandleTimersUpdated;
-        _match.OnPlayerTimedOut -= HandlePlayerTimedOut;
+        if (matchController == null) return;
+        matchController.OnMatchStarted -= HandleMatchStarted;
+        matchController.OnBoardChanged -= HandleBoardChanged;
+        matchController.OnTurnChanged -= HandleTurnChanged;
+        matchController.OnScoresUpdated -= HandleScoresUpdated;
+        matchController.OnGameOver -= HandleGameOver;
+        matchController.OnUndoPerformed -= HandleUndoPerformed;
+        matchController.OnTimersUpdated -= HandleTimersUpdated;
+        matchController.OnPlayerTimedOut -= HandlePlayerTimedOut;
     }
 
 
@@ -215,7 +229,7 @@ public class GameBoard : MonoBehaviour
 
     private void ApplySpecialTileVisuals()
     {
-        var map = _match.SpecialTiles;
+        var map = matchController.SpecialTiles;
         if (map == null) return;
 
         for (int i = 0; i < _boardTiles.Length; i++)
@@ -231,7 +245,14 @@ public class GameBoard : MonoBehaviour
     /*__________[ Inputs ]__________*/
     public void SelectTile(int tileIndex)
     {
-        if (_match.isGameOver) return;
+        if (matchController.isGameOver) return;
+        Debug.Log($"SelectTile called, _awaitingStabTarget={awaitingStabTarget}");
+        if (awaitingStabTarget)
+        {
+            Debug.Log($"Stabbing tile {tileIndex}");
+            pendingStrengthCard.OnTileStabbed(tileIndex);
+            return;
+        }
  
         _selectedTileIndex = tileIndex;
         _waitingForPieceInput = true;
@@ -249,7 +270,7 @@ public class GameBoard : MonoBehaviour
  
         _piecePlacedCounts[pieceIndex]++;
  
-        if (_match.GetCurrentAgent() is LocalPlayerAgent human)
+        if (matchController.GetCurrentAgent() is LocalPlayerAgent human)
             human.ReceiveUIMove(_selectedTileIndex, pieceIndex + 1);
     }
  
@@ -257,7 +278,7 @@ public class GameBoard : MonoBehaviour
     {
         _waitingForPieceInput = false;
         pieceContainer.SetActive(false);
-        _match.RequestUndo();
+        matchController.RequestUndo();
     }
  
     public void ResetBoard() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -283,6 +304,12 @@ public class GameBoard : MonoBehaviour
         RefreshAllTileVisuals(state);
         RefreshScoreText(scores);
         ApplySpecialTileVisuals();
+
+        if (GameInstance.Instance.IsSoloMode)
+        {
+            var cards = TarotDeck.DrawRandom(5, this);
+            cardHand.DealCards(cards, 0);
+        }
     }
  
     private void HandleBoardChanged(BoardState state, int[] scores, TileScoringResult[] scoringResults)
@@ -293,6 +320,8 @@ public class GameBoard : MonoBehaviour
  
     private void HandleTurnChanged(int turnSlot, IPlayerAgent agent)
     {
+        TickStabbedTiles();
+        
         titleText.color = GetPlayerColor(turnSlot);
         titleText.text  = $"{agent.Profile.username}'s Turn";
         
@@ -302,6 +331,7 @@ public class GameBoard : MonoBehaviour
             _waitingForPieceInput = false;
             pieceContainer.SetActive(false);
         }
+        cardHand.gameObject.SetActive(isPlayer);
     }
  
     private void HandleScoresUpdated(int[] scores)
@@ -329,21 +359,21 @@ public class GameBoard : MonoBehaviour
         }
         else
         {
-            var winner = _match.GetAgent(result.WinnerSlot);
+            var winner = matchController.GetAgent(result.WinnerSlot);
             gameOverText.color = GetPlayerColor(result.WinnerSlot);
             gameOverText.text  = $"{winner.Profile.username} Won!";
         }
  
         // Give players their gooooooold
         var statsBuilder = new StringBuilder();
-        for (int i = 0; i < _match.PlayerCount; i++)
+        for (int i = 0; i < matchController.PlayerCount; i++)
         {
-            var agent = _match.GetAgent(i);
+            var agent = matchController.GetAgent(i);
             int bounty = result.MoneyMatchBounty;
             int earned;
             if (i == result.WinnerSlot && !result.IsTie)
             {
-                earned = (result.FinalScores[i] * 2) + (bounty * _match.PlayerCount);
+                earned = (result.FinalScores[i] * 2) + (bounty * matchController.PlayerCount);
             }
             else
             {
@@ -353,7 +383,7 @@ public class GameBoard : MonoBehaviour
             // Update the final player scores info
             string hex = ColorUtility.ToHtmlStringRGB(GetPlayerColor(i));
             statsBuilder.Append($"<color=#{hex}>{agent.Profile.username}<br>S:{result.FinalScores[i]}<br><sprite=0>+{earned}</color>");
-            if (i < _match.PlayerCount - 1) statsBuilder.Append("<br><br>");
+            if (i < matchController.PlayerCount - 1) statsBuilder.Append("<br><br>");
  
             // Update gold shelf display
             _goldEntries[i].SetGold(agent.Profile.gold, agent.Profile.username, GetPlayerColor(i));
@@ -361,7 +391,7 @@ public class GameBoard : MonoBehaviour
         gameOverPlayerStats.text = statsBuilder.ToString();
  
         // Piece stats
-        BuildPieceStatsText(_match.boardState);
+        BuildPieceStatsText(matchController.boardState);
         
         if (GameInstance.Instance.IsSoloMode)
             HandleSoloGameOver(result);
@@ -376,8 +406,8 @@ public class GameBoard : MonoBehaviour
     private void HandleTimersUpdated(float[] remaining)
     {
         if (timerText == null) return;
-        int slot = _match.currentTurnSlot;
-        bool eliminated = _match.IsPlayerEliminated(slot);
+        int slot = matchController.currentTurnSlot;
+        bool eliminated = matchController.IsPlayerEliminated(slot);
         timerText.color = eliminated ? eliminatedColor : GetPlayerColor(slot);
         timerText.text = eliminated ? "OUT" : FormatTime(remaining[slot]);
     }
@@ -386,7 +416,7 @@ public class GameBoard : MonoBehaviour
     {
         if (_goldEntries != null && slot < _goldEntries.Length)
         {
-            _goldEntries[slot].SetGold(_match.GetAgent(slot).Profile.gold, _match.GetAgent(slot).Profile.username, eliminatedColor);
+            _goldEntries[slot].SetGold(matchController.GetAgent(slot).Profile.gold, matchController.GetAgent(slot).Profile.username, eliminatedColor);
         }
     }
     
@@ -429,6 +459,52 @@ public class GameBoard : MonoBehaviour
     
     
     
+    /*__________[ Tarot Card Events ]__________*/
+    public void BeginStrengthTargeting(TarotCard_Strength card)
+    {
+        Debug.Log("BeginStrengthTargeting called");
+        awaitingStabTarget = true;
+        pendingStrengthCard = card;
+
+        foreach (var tile in _boardTiles)
+        {
+            tile.button.interactable = true;
+        }
+    }
+
+    public void ApplyStab(int tileIndex, GameObject daggerObject)
+    {
+        matchController.boardState.ClearTile(tileIndex);
+
+        stabbedTiles[tileIndex] = daggerObject;
+        stabbedTurnCooldown[tileIndex] = 4;
+        awaitingStabTarget = false;
+        pendingStrengthCard = null;
+    }
+
+    private void TickStabbedTiles()
+    {
+        var keys = new List<int>(stabbedTurnCooldown.Keys);
+    
+        foreach (int i in keys)
+        {
+            int remaining = stabbedTurnCooldown[i] - 1;
+            if (remaining <= 0)
+            {
+                stabbedTurnCooldown.Remove(i);
+                if (stabbedTiles.TryGetValue(i, out var obj)) Destroy(obj);
+                stabbedTiles.Remove(i);
+            }
+            else
+            {
+                stabbedTurnCooldown[i] = remaining;
+            }
+        }
+    }
+    
+    
+    
+    
     /*__________[ Visuals ]__________*/
     private void RefreshAllTileVisuals(BoardState state, TileScoringResult[] scoringResults = null)
     {
@@ -447,7 +523,7 @@ public class GameBoard : MonoBehaviour
                 tile.button.interactable = true;
                 tile.upgradedFX.SetActive(false);
                 SetArrowsActive(tile, null);
-                if (_match.SpecialTiles != null) SetSpecialTileVisual(tile, _match.SpecialTiles.Types[i]);
+                if (matchController.SpecialTiles != null) SetSpecialTileVisual(tile, matchController.SpecialTiles.Types[i]);
                 else if (tile.special != null) tile.special.text = "";
             }
             else
@@ -494,7 +570,7 @@ public class GameBoard : MonoBehaviour
         for (int i = 0; i < scores.Length; i++)
         {
             Color c = GetPlayerColor(i);
-            sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(c)}>{_match.GetAgent(i).Profile.username}:<br>{scores[i]}<br>");
+            sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(c)}>{matchController.GetAgent(i).Profile.username}:<br>{scores[i]}<br>");
             if (i < scores.Length - 1) sb.Append("<br>");
         }
         scoreText.text = sb.ToString();
@@ -509,7 +585,7 @@ public class GameBoard : MonoBehaviour
         for (int i = 0; i < state.tileCount; i++)
         {
             int piece = state.Tiles[i].piece;
-            if (piece > 0 && _match.ruleset.IsPieceUpgraded(state, i))
+            if (piece > 0 && matchController.ruleset.IsPieceUpgraded(state, i))
                 upgraded[piece - 1]++;
         }
  
@@ -566,7 +642,12 @@ public class GameBoard : MonoBehaviour
     private bool DidLocalPlayerWin(GameOverResult result)
     {
         if (result.IsTie) return false;
-        return _match.GetAgent(result.WinnerSlot) is LocalPlayerAgent;
+        return matchController.GetAgent(result.WinnerSlot) is LocalPlayerAgent;
+    }
+    
+    public Vector3 GetTileWorldPosition(int tileIndex)
+    {
+        return _boardTiles[tileIndex].transform.position;
     }
 
     #endregion
