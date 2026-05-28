@@ -156,7 +156,8 @@ public class StandardRuleset : IRuleset
             {
                 if (!state.IsInBounds(adj)) continue;
                 var neighbor = state.Tiles[state.GridToIndex(adj)];
-                if (neighbor.player == currentTile.player && neighbor.piece == Wolf)
+                //if (neighbor.player == currentTile.player && neighbor.piece == Wolf) // Errynei suggested that I SMITE the rule here and make it team-agnostic
+                if (neighbor.piece == Wolf)
                     totalScore++;
             }
         }
