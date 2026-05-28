@@ -37,25 +37,26 @@ public class Dummy : MonoBehaviour
     /*-----[ Mono Functions ]-----------------------------------------------------------------------------------------*/
     private void Awake()
     {
-        GameFuncs.ResetRegisteredProcessing();
+        GameFuncs.ResetRegisteredProcessors();
     }
 
     private void OnEnable()
     {
-        GameFuncs.ResetRegisteredProcessing();
-        GameFuncs.RegisterOutputProcessing<BoardTileData, BoardTileData, bool>(nameof(GameFuncs.Beats), InvertedBeats);
+        GameFuncs.ResetRegisteredProcessors();
+        GameFuncs.NewOutputProcessor<BoardTileData, BoardTileData, bool>(nameof(GameFuncs.Beats), InvertedBeats).Register();
     }
 
     private void OnDisable()
     {
-        GameFuncs.ResetRegisteredProcessing();
+        GameFuncs.ResetRegisteredProcessors();
     }
 
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/
-    private bool InvertedBeats(BoardTileData tile, BoardTileData other, bool output)
+    private void InvertedBeats(BoardTileData tile, BoardTileData other, ref bool output)
     {
-        // Modify the interactions between tile and other to come up with a new output
-        return !output;
+        // If the pieces are not the same, flip the outcome of the Beats function
+        if (tile.piece != other.piece)
+            output = !output;
     }
 
     /*-----[ External Functions ]-------------------------------------------------------------------------------------*/

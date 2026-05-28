@@ -208,14 +208,13 @@ public class StandardRuleset : IRuleset
     public IReadOnlyList<int> GetValidPieceTypes(BoardState state, int currentPlayerSlot) => new[] { Wolf, Fox, Rabbit };
 
 
-
     #endregion
 }
 
 public static partial class GameFuncs
 {
     public const int Empty = 0, Wolf = 1, Fox = 2, Rabbit = 3;
-    
+
     public static bool Beats(BoardTileData tile, BoardTileData other)
     {
         ProcessInput(ref tile, ref other);
