@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.VisualScripting;
-using UnityEngine;
 
 public abstract class GameRule
 {
     private HashSet<GameFuncs.Processor> gameruleProcessors;
-
     protected bool HasBeenInitialized => gameruleProcessors != null;
+
 
     private bool _enabled = false;
     public bool Enabled {
@@ -33,29 +32,31 @@ public abstract class GameRule
                 gameruleProcessors.Add(modifierAttribute.CreateProcessor(method.IsStatic ? null : this, method));
         }
     }
-
     public void Enable()
     {
         _enabled = true;
-        Debug.Log("Enabled!");
         if (!HasBeenInitialized) Initialize();
         
-
         foreach (var processor in gameruleProcessors)
             processor.Register();
 
-        
+        OnEnable();
     }
     public void Disable()
     {
         _enabled = false;
-        Debug.Log("Disabled!");
         if (!HasBeenInitialized) Initialize();
 
         foreach (var processor in gameruleProcessors)
             processor.Unregister();
+
+        OnDisable();
     }
 
+    public virtual void OnEnable() { }
+    public virtual void OnDisable() { }
+
+    //---------------------------------------------------------- Modify Func Attributes ---------------------------------------------------------------------
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
     protected abstract class FuncModificationAttribute : Attribute
     {
@@ -81,4 +82,3 @@ public abstract class GameRule
             => GameFuncs.NewOutputProcessor(targetFuncName, instance, method);
     }
 }
-

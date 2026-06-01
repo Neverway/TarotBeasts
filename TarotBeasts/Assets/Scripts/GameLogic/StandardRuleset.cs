@@ -223,7 +223,8 @@ public static partial class GameFuncs
         if (tile.piece == Wolf && other.piece == Fox) output = true;
         else if (tile.piece == Fox && other.piece == Rabbit) output = true;
         else if (tile.piece == Rabbit && other.piece == Wolf) output = true;
-
+    
         return ProcessOutput(tile, other, output);
     }
 }
+
