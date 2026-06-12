@@ -169,6 +169,8 @@ public class MatchController : MonoBehaviour
     /*__________[ Scoring functions ]__________*/
     private void RefreshScores()
     {
+        boardState.UpdatePieceInfo();
+
         for (int i = 0; i < scores.Length; i++)
         {
             scores[i] = 0;

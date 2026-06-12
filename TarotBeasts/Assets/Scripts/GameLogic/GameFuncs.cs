@@ -78,6 +78,7 @@ public static partial class GameFuncs
             .OrderBy(f => f.Name)
             .Select(f => (Expression) Expression.Field(tupleInputParam, f))
             .ToList();
+
         // Append "ref output" to the args if this method is for outputs
         if (!isForInputs) methodArgs.Add(outputParam);
 

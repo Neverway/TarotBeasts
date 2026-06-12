@@ -12,9 +12,9 @@ public class GameRuleTestComponent : MonoBehaviour
 public class GameRule_InvertBeats : GameRule
 {
     [ModifyOutputOf(nameof(GameFuncs.Beats))]
-    public void Beats(BoardTileData tile, BoardTileData target, ref bool result)
+    public void Beats(Animal animal, Animal target, ref bool result)
     {
-        if (tile.piece != target.piece)
+        if (animal.typeID != target.typeID)
             result = !result;
     }
 }

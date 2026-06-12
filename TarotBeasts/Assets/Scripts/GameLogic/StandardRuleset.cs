@@ -10,6 +10,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.Audio.ProcessorInstance;
 
 /// <summary>
 /// The basic ruleset for the RPS WFR gameplay
@@ -58,20 +59,22 @@ public class StandardRuleset : IRuleset
     public bool IsPieceUpgraded(BoardState state, int tileIndex)
     {
         var tile = state.Tiles[tileIndex];
-        if (tile.player == 0) return false;
+        return tile.piece is CommonAnimal commonAnimal && commonAnimal.IsUpgraded;
 
-        if (_specialTiles != null && _specialTiles.Types[tileIndex] == SpecialTileType.AutoUpgrade) return true;
- 
-        Vector2Int pos = state.IndexToGrid(tileIndex);
-        Vector2Int[] neighbors = { pos + Vector2Int.up, pos + Vector2Int.down, pos + Vector2Int.left, pos + Vector2Int.right };
- 
-        foreach (var adjacent in neighbors)
-        {
-            if (!state.IsInBounds(adjacent)) continue;
-            var neighbor = state.Tiles[state.GridToIndex(adjacent)];
-            if (neighbor.player == tile.player && Beats(tile, neighbor)) return true;
-        }
-        return false;
+        //if (tile.player == 0) return false;
+        //
+        //if (_specialTiles != null && _specialTiles.Types[tileIndex] == SpecialTileType.AutoUpgrade) return true;
+        //
+        //Vector2Int pos = state.IndexToGrid(tileIndex);
+        //Vector2Int[] neighbors = { pos + Vector2Int.up, pos + Vector2Int.down, pos + Vector2Int.left, pos + Vector2Int.right };
+        //
+        //foreach (var adjacent in neighbors)
+        //{
+        //    if (!state.IsInBounds(adjacent)) continue;
+        //    var neighbor = state.Tiles[state.GridToIndex(adjacent)];
+        //    if (neighbor.player == tile.player && Beats(tile, neighbor)) return true;
+        //}
+        //return false;
     }
     
     private int GetPointsAgainst(BoardTileData tile, BoardTileData other, bool thisUpgraded, bool otherUpgraded)
@@ -81,17 +84,20 @@ public class StandardRuleset : IRuleset
         if (other.player == tile.player) return 0;
  
         // SU rabbit negates fox scoring
-        if (tile.piece == Fox && other.piece == Rabbit && otherUpgraded && !thisUpgraded)
+        if (tile.piece.Is<Fox>() && other.piece.Is<Rabbit>() && otherUpgraded && !thisUpgraded)
             return 0;
  
         // SU rabbit scores on fox
-        if (thisUpgraded && tile.piece == Rabbit && other.piece == Fox && !otherUpgraded)
+        if (thisUpgraded && tile.piece.Is<Rabbit>() && other.piece.Is<Fox>() && !otherUpgraded)
             return 1;
  
         return Beats(tile, other) ? 1 : 0;
     }
 
-    private bool Beats(BoardTileData tile, BoardTileData other) => GameFuncs.Beats(tile, other);
+    private bool Beats(BoardTileData tile, BoardTileData other)
+        => tile.piece != null && other.piece != null
+        && tile.piece.Is(out Animal animal) && other.piece.Is(out Animal otherAnimal)
+        && animal.Beats(otherAnimal);
 
     private int ApplyScoreMultiplier(int raw, int tileIndex)
     {
@@ -113,6 +119,7 @@ public class StandardRuleset : IRuleset
  
         var currentTile = state.Tiles[tileIndex];
         if (currentTile.player == 0) return result; // empty tile scores nothing
+        if (currentTile.piece == null) return result;
  
         bool upgraded = IsPieceUpgraded(state, tileIndex);
         result.IsUpgraded = upgraded;
@@ -120,7 +127,8 @@ public class StandardRuleset : IRuleset
         Vector2Int position = state.IndexToGrid(tileIndex);
  
         // SU fox checks diagonals too
-        Vector2Int[] scoringDirs = (upgraded && currentTile.piece == Fox)
+        
+        Vector2Int[] scoringDirs = (upgraded && currentTile.piece.Is<Fox>())
             ? new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right, Vector2Int.up+Vector2Int.right, Vector2Int.up+Vector2Int.left, Vector2Int.down+Vector2Int.right, Vector2Int.down+Vector2Int.left }
             : new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
  
@@ -149,15 +157,15 @@ public class StandardRuleset : IRuleset
         }
  
         // SU wolf bonus +1 per adjacent friendly upgraded wolf
-        if (upgraded && currentTile.piece == Wolf)
+        if (upgraded && currentTile.piece.Is<Wolf>())
         {
-            Vector2Int[] cardinals = { position+Vector2Int.up, position+Vector2Int.down, position+Vector2Int.left, position+Vector2Int.right };
-            foreach (var adj in cardinals)
+            foreach (var dir in BoardDir.Cardinals)
             {
+                Vector2Int adj = position + dir;
                 if (!state.IsInBounds(adj)) continue;
                 var neighbor = state.Tiles[state.GridToIndex(adj)];
                 //if (neighbor.player == currentTile.player && neighbor.piece == Wolf) // Errynei suggested that I SMITE the rule here and make it team-agnostic
-                if (neighbor.piece == Wolf)
+                if (neighbor.piece != null && neighbor.piece.Is<Wolf>())
                     totalScore++;
             }
         }
@@ -211,20 +219,20 @@ public class StandardRuleset : IRuleset
     #endregion
 }
 
-public static partial class GameFuncs
-{
-    public const int Empty = 0, Wolf = 1, Fox = 2, Rabbit = 3;
-
-    public static bool Beats(BoardTileData tile, BoardTileData other)
-    {
-        ProcessInput(ref tile, ref other);
-        bool output = false;
-        
-        if (tile.piece == Wolf && other.piece == Fox) output = true;
-        else if (tile.piece == Fox && other.piece == Rabbit) output = true;
-        else if (tile.piece == Rabbit && other.piece == Wolf) output = true;
-    
-        return ProcessOutput(tile, other, output);
-    }
-}
+//public static partial class GameFuncs
+//{
+//    public const int Empty = 0, Wolf = 1, Fox = 2, Rabbit = 3;
+//
+//    public static bool Beats(BoardTileData tile, BoardTileData other)
+//    {
+//        ProcessInput(ref tile, ref other);
+//        bool output = false;
+//        
+//        if (tile.piece == Wolf && other.piece == Fox) output = true;
+//        else if (tile.piece == Fox && other.piece == Rabbit) output = true;
+//        else if (tile.piece == Rabbit && other.piece == Wolf) output = true;
+//    
+//        return ProcessOutput(tile, other, output);
+//    }
+//}
 
