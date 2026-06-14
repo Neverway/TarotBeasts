@@ -1,0 +1,17 @@
+{
+  "name": "TarotBeasts",
+  "version": "1.0",
+  "language": "csharp",
+  "lint_rules_file": ".meowrylint",
+  "excluded_dirs": [
+    ".git",
+    "bin",
+    "obj",
+    ".vs",
+    "__pycache__",
+    "node_modules"
+  ],
+  "excluded_extensions": [],
+  "open_files": [],
+  "active_file": null
+}

@@ -73,7 +73,7 @@ public class GameBoardOLD : MonoBehaviour
     private Sprite[] pieceSprites;
     private GameInstance gameInstance;
 
-
+    
     #endregion
 
 

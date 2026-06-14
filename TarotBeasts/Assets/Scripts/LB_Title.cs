@@ -22,7 +22,8 @@ public class LB_Title : MonoBehaviour
 
 
     /*-----[ Internal Variables ]-------------------------------------------------------------------------------------*/
-
+    public bool _doesQuitGame;
+    public int test;
 
 
     /*-----[ Reference Variables ]------------------------------------------------------------------------------------*/
@@ -40,6 +41,11 @@ public class LB_Title : MonoBehaviour
     {
         Cursor.visible = true;
         versionText.text = Application.version;
+    }
+    
+    private void Update()
+    {
+        // Nothing here
     }
 
     /*-----[ Internal Functions ]-------------------------------------------------------------------------------------*/

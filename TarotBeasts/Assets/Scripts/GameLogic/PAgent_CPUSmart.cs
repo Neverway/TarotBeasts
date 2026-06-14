@@ -62,20 +62,20 @@ public class PAgent_CPUSmart : IPlayerAgent
 
         int tile, piece;
 
-        // Easy cpu (picks a random tile)
+        // Easy cpu (picks a random tile) reminder, this is  only in effect until r3
         if (round <= 2)
         {
             // Easy — fully random
             tile  = validTiles [UnityEngine.Random.Range(0, validTiles.Count)];
             piece = validPieces[UnityEngine.Random.Range(0, validPieces.Count)];
         }
-        // Medium cpu (best tile for this turn)
+        // Medium cpu (best tile for this turn) reminder, this is only in effect until r5
         else if (round <= 4)
         {
             // Medium — pick the (tile, piece) combo that scores highest for the CPU right now
             (tile, piece) = BestGreedyMove(state, ruleset, mySlot, validTiles, validPieces);
         }
-        // Hard cpu (think 1 move ahead)
+        // Hard cpu (think 1 move ahead) reminder, this is only in effect until rINFINITY
         else
         {
             (tile, piece) = BestLookaheadMove(state, ruleset, mySlot, validTiles, validPieces);

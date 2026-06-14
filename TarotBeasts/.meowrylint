@@ -1,0 +1,26 @@
+{
+  "_comment": "Meowry IDE lint configuration. Rules prefixed MEW are built-in.",
+  "enabled_rules": [
+    "MEW001",
+    "MEW002",
+    "MEW004",
+    "MEW005",
+    "MEW007"
+  ],
+  "private_field_prefix": "_",
+  "parameter_prefix": "",
+  "enforce_pascal_case_public": true,
+  "no_trailing_whitespace": true,
+  "max_line_length": 120,
+  "highlight_todos": true,
+  "header_lines": [
+    "//==========================================( Neverway 2026 )=========================================================//",
+    "// Author",
+    "//",
+    "//",
+    "// Contributors",
+    "//",
+    "//",
+    "//====================================================================================================================//"
+  ]
+}

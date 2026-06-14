@@ -36,7 +36,7 @@ public class CursorController : MonoBehaviour
     /*-----[ Mono Functions ]-----------------------------------------------------------------------------------------*/
     private void Start()
     {
-    
+        
     }
 
     private void Update()
