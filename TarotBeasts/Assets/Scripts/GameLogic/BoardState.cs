@@ -59,6 +59,17 @@ public class BoardState
 
     /*-----[ External Functions ]-------------------------------------------------------------------------------------*/
     
+    public void UpdatePieceInfo()
+    {
+        Context.PushTag(Context.Tags.UPDATING_PIECE_INFO);
+
+        foreach (var tile in Tiles)
+            if (tile.isOccupied) 
+                tile.piece.OnUpdatePieceInfo();
+
+        Context.PopTag();
+    }
+
     /*__________[ Undo / Move history ]__________*/
     public void UpdateMoveHistory(int currentTurn)
     {
@@ -75,44 +86,31 @@ public class BoardState
     
     /*__________[ Grid functions ]__________*/
     public Vector2Int IndexToGrid(int index)
-    {
-        return new Vector2Int(index % width, Mathf.FloorToInt(index / (float)width));
-    }
-
-    public int GridToIndex(Vector2Int position)
-    {
-        return (position.y * width) + position.x;
-    }
-
+        => new Vector2Int(index % width, Mathf.FloorToInt(index / (float)width));
+    public int GridToIndex(Vector2Int position) 
+        => (position.y * width) + position.x;
     public bool IsInBounds(Vector2Int position)
-    {
-        return position.x >= 0 && position.x < width && position.y >= 0 && position.y < height;
-    }
-
-    public bool IsTileEmpty(int index)
-    {
-        return Tiles[index].player == 0;
-    }
+        => position.x >= 0 && position.x < width && position.y >= 0 && position.y < height;
+    public bool IsTileEmpty(int index) 
+        => Tiles[index].player == 0;
 
     public bool AllTilesFilled()
     {
         for (int i = 0; i < Tiles.Length; i++)
         {
-            if (Tiles[i].player == 0) return false;
+            if (!Tiles[i].isOccupied) return false;
         }
         return true;
     }
 
     public void PlacePiece(int tileIndex, int playerSlot, int pieceType)
     {
-        Tiles[tileIndex].piece = pieceType;
-        Tiles[tileIndex].player = playerSlot;
+        Tiles[tileIndex].piece = Piece.Create(pieceType, playerSlot, new BoardPos(this, tileIndex));
     }
 
     public void ClearTile(int tileIndex)
     {
-        Tiles[tileIndex].piece = 0;
-        Tiles[tileIndex].player = 0;
+        Tiles[tileIndex].piece = null;
     }
 
 

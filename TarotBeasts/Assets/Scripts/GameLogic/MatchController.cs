@@ -8,10 +8,10 @@
 //====================================================================================================================//
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using System.Linq;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 /// <summary>
 /// Handles turn order, player lists, ruleset references, and fires game events
@@ -169,6 +169,8 @@ public class MatchController : MonoBehaviour
     /*__________[ Scoring functions ]__________*/
     private void RefreshScores()
     {
+        boardState.UpdatePieceInfo();
+
         for (int i = 0; i < scores.Length; i++)
         {
             scores[i] = 0;

@@ -528,7 +528,7 @@ public class GameBoard : MonoBehaviour
             }
             else
             {
-                tile.icon.sprite = spriteMap[data.piece];
+                tile.icon.sprite = spriteMap[data.piece.typeID];
                 tile.icon.enabled = true;
                 tile.button.interactable = false;
  
@@ -584,7 +584,7 @@ public class GameBoard : MonoBehaviour
  
         for (int i = 0; i < state.tileCount; i++)
         {
-            int piece = state.Tiles[i].piece;
+            int piece = state.Tiles[i].piece.typeID;
             if (piece > 0 && matchController.ruleset.IsPieceUpgraded(state, i))
                 upgraded[piece - 1]++;
         }

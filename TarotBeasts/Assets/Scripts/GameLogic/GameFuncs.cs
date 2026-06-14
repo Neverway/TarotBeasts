@@ -4,11 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.Windows;
-
 
 public static partial class GameFuncs
 {
@@ -66,48 +62,40 @@ public static partial class GameFuncs
         => ((T1, T2, T3, T4) input, ref TOut output) => func.Invoke(input.Item1, input.Item2, input.Item3, input.Item4, ref output);
 
     //Conversion method via reflection (this is black magic, ChatGPT had to help me on this one unfortunately, I modified it a bit though)
-    public static Delegate ToSingleInput(object instance, MethodInfo method, Type inputType, Type outputType = null)
+    //Takes a method (using multiple input types) and wraps it in a Lambda that lets you provide a tuple of those input types, and it
+    //  will properly assign the values as a ref to the inputs/outputs (much like in the functions above this) to the provided method
+    public static Delegate ToSingleInput(object instance, MethodInfo method, Type inputTupleType, Type outputType = null)
     {
-        ParameterExpression tupleParam, outputParam;
+        bool isForInputs = outputType == null;
+        bool isStatic = instance == null;
+        // Define params for the lambda
+        ParameterExpression tupleInputParam = Expression.Parameter(isForInputs ? inputTupleType.MakeByRefType() : inputTupleType, "input");
+        ParameterExpression outputParam = isForInputs ? null : Expression.Parameter(outputType.MakeByRefType(), "output");
 
-        // Define params
-        if (outputType == null)
-        {
-            tupleParam = Expression.Parameter(inputType.MakeByRefType(), "input");
-            outputParam = null;
-        }
-        else
-        {
-            tupleParam = Expression.Parameter(inputType, "input");
-            outputParam = Expression.Parameter(outputType.MakeByRefType(), "output");
-        }
-            
-        // Extract Item1, Item2, Item3...
-        List<Expression> tupleArgs = inputType
-            .GetFields()
+        // Create Args for invoking the given method by extracting Item1, Item2, Item3... etc from the tuple
+        List<Expression> methodArgs = inputTupleType.GetFields()
             .Where(f => f.Name.StartsWith("Item"))
             .OrderBy(f => f.Name)
-            .Select(f => (Expression)
-                Expression.Field(tupleParam, f))
+            .Select(f => (Expression) Expression.Field(tupleInputParam, f))
             .ToList();
 
-        // append ref output
-        if (outputParam != null) tupleArgs.Add(outputParam);
+        // Append "ref output" to the args if this method is for outputs
+        if (!isForInputs) methodArgs.Add(outputParam);
 
-        MethodCallExpression body = instance == null ? 
-            Expression.Call(method, tupleArgs) :
-            Expression.Call(Expression.Constant(instance), method, tupleArgs);
+        // Define the body of the lambda (invokes the given method with the methodArgs)
+        MethodCallExpression body = isStatic ? 
+            Expression.Call(method, methodArgs) :
+            Expression.Call(Expression.Constant(instance), method, methodArgs);
 
-        if (outputType == null)
-        {
-            Type delegateType = typeof(ModInputFunc<>).MakeGenericType(inputType);
-            return Expression.Lambda(delegateType, body, tupleParam).Compile();
-        }
-        else
-        {
-            Type delegateType = typeof(ModOutputFunc<,>).MakeGenericType(inputType, outputType);
-            return Expression.Lambda(delegateType, body, tupleParam, outputParam).Compile();
-        }
+        // Get the delegate type, which depends on whether this method uses outputs (known via whether an output type was provided)
+        Type delegateType = isForInputs ?
+            typeof(ModInputFunc<>).MakeGenericType(inputTupleType) :
+            typeof(ModOutputFunc<,>).MakeGenericType(inputTupleType, outputType);
+
+        //Create the lambdo expression and return it
+        return isForInputs ?
+            Expression.Lambda(delegateType, body, tupleInputParam).Compile() :
+            Expression.Lambda(delegateType, body, tupleInputParam, outputParam).Compile();
     }
 
 
@@ -226,7 +214,7 @@ public static partial class GameFuncs
     {
         //Get Input type from given method parameters
         var parameterTypes = onProcessInput.GetParameters().Select((p) => p.ParameterType.GetElementType()).ToArray();
-        bool HasOnly1Input = parameterTypes.Count() == 1;
+        bool HasOnly1Input = parameterTypes.Length == 1;
         Type inputType = HasOnly1Input ? parameterTypes[0] : parameterTypes.ToValueTupleType();
 
         //Get type of Processor for the methods Input type
@@ -256,8 +244,8 @@ public static partial class GameFuncs
 
         //Create the function for the Processor that invokes the given method
         Type funcType = typeof(ModOutputFunc<,>).MakeGenericType(inputType, outputType);
-        object func = HasOnly1Input ? 
-            Delegate.CreateDelegate(funcType, onProcessOutput) : 
+        object func = HasOnly1Input ?
+            (instance == null ? Delegate.CreateDelegate(funcType, onProcessOutput) : Delegate.CreateDelegate(funcType, instance, onProcessOutput)) : 
             ToSingleInput(instance, onProcessOutput, inputType, outputType);
 
         //Construct the processor and return it
@@ -304,7 +292,6 @@ public static partial class GameFuncs
         }
         return output;
     }
-
 
     //ProcessInput helper methods for cases where there are multiple inputs to the function (this saves you from having to use tuples by doing it for you)
     public static void ProcessInput<T1, T2>(ref T1 input1, ref T2 input2, [CallerMemberName] string funcName = "")
